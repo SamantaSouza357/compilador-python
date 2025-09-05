@@ -77,7 +77,7 @@ class LexerPython:
         (r"[+\-*/%//<>!]+", TokenType.OPERATOR),      # operadores
         (r"[=]+", TokenType.ASSIGN),   
         (r"[\(\)\[\]\{\},.:]", TokenType.DELIMITER),   # delimitadores
-        (r"\n", TokenType.NEWLINE),                    # quebra de linha
+        (r"\r?\n", TokenType.NEWLINE),                    # quebra de linha (suporta CRLF)
     ]
 
     def __init__(self, codigo):
@@ -107,19 +107,3 @@ class LexerPython:
                 raise Exception(f"Erro léxico na linha {self.linha}: caractere inesperado '{self.codigo[self.pos]}'")
         tokens.append(Token(TokenType.EOF, "EOF", self.linha))
         return tokens
-
-
-# ====================================
-# Exemplo de uso
-# ====================================
-if __name__ == "__main__":
-    caminho = "exemplo.py"
-
-    with open(caminho, "r", encoding="utf-8") as f:
-        codigo = f.read()
-
-    lexer = LexerPython(codigo)
-    tokens = lexer.get_tokens()
-
-    for t in tokens:
-        print(t)
