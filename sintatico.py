@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-# py_syntax_checker.py
-# Um verificador sintático de Python que usa o parser do CPython (ast.parse)
-# e apresenta mensagens de erro amigáveis, com uma heurística para o "esperado".
-
 import sys
 import ast
 import json
