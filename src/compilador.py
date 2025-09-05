@@ -33,11 +33,28 @@ class LexerPython:
                 if match:
                     lexema = match.group(0)
                     if tipo:
-                        if tipo == TokenType.IDENTIFIER and lexema in KEYWORDS:
-                            tokens.append(Token(TokenType.KEYWORD, lexema, self.linha))
+                        if tipo == TokenType.IDENTIFIER:
+                            if lexema in KEYWORDS:
+                                tokens.append(Token(TokenType.KEYWORD, lexema, self.linha))
+                            else:
+                                # Regra: identificadores com no máximo 20 caracteres
+                                if len(lexema) > 20:
+                                    raise Exception(
+                                        f"Erro léxico na linha {self.linha}: identificador com mais de 20 caracteres"
+                                    )
+                                tokens.append(Token(tipo, lexema, self.linha))
+                        elif tipo == TokenType.NUMBER:
+                            tokens.append(Token(tipo, lexema, self.linha))
                         else:
                             tokens.append(Token(tipo, lexema, self.linha))
                     self.pos = match.end(0)
+                    # Regra adicional: número não pode ser seguido imediatamente por letra ou '_'
+                    if tipo == TokenType.NUMBER and self.pos < len(self.codigo):
+                        prox = self.codigo[self.pos]
+                        if prox.isalpha() or prox == "_":
+                            raise Exception(
+                                f"Erro léxico na linha {self.linha}: identificador iniciando com número"
+                            )
                     if "\n" in lexema:
                         self.linha += lexema.count("\n")
                     break
