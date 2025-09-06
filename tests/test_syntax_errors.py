@@ -66,7 +66,7 @@ class TestSyntaxErrors(unittest.TestCase):
         with self.assertRaises(SyntaxErrorCompilador) as ctx:
             SyntaxAnalyzer(tokens).parse()
         self.assertEqual(ctx.exception.linha, 1)
-        self.assertIn("fator inesperado", str(ctx.exception))
+        self.assertIn("comando inesperado", str(ctx.exception))
 
 
 if __name__ == "__main__":

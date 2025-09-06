@@ -1,7 +1,7 @@
 from enum import Enum
 
 # ====================================
-# Definição de tipos de tokens e dados
+# Token types and data definitions
 # ====================================
 class TokenType(Enum):
     KEYWORD = "KEYWORD"
@@ -17,7 +17,7 @@ class TokenType(Enum):
     ASSIGN = "ASSIGN"
 
 
-# Palavras reservadas do Python
+# Python reserved keywords
 KEYWORDS = {
     "def",
     "class",
@@ -55,7 +55,7 @@ KEYWORDS = {
 }
 
 
-# Tabela de símbolos (delimitadores)
+# Symbol table (delimiters)
 SIMBOLOS = {
     "(": "ABRE_PARENTESES",
     ")": "FECHA_PARENTESES",
@@ -103,4 +103,3 @@ __all__ = [
     "KEYWORDS",
     "SIMBOLOS",
 ]
-
