@@ -4,15 +4,6 @@ from errors import SyntaxErrorCompilador
 
 
 class ExpressionParser:
-    """
-    Expression parser using precedence climbing (not Pratt).
-    Supports:
-      - literals: number, string, True/False
-      - identifiers and calls: id(args)
-      - parentheses: (expr)
-      - binary operators: * / // % , + - , comparisons == != > < >= <=
-    """
-
     # precedência (maior vence) e associatividade (L = esquerda)
     PRECEDENCE = {
         "*": (20, "L"),

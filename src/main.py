@@ -4,7 +4,7 @@ from syntax_analyzer import SyntaxAnalyzer
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Analisador léxico simples para Python."
+        description="Compilador para Python."
     )
     parser.add_argument(
         "--file",

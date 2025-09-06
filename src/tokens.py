@@ -1,8 +1,6 @@
 from enum import Enum
 
-# ====================================
-# Token types and data definitions
-# ====================================
+
 class TokenType(Enum):
     KEYWORD = "KEYWORD"
     IDENTIFIER = "IDENTIFIER"

@@ -1,11 +1,9 @@
 import re
 from tokens import TokenType, Token, KEYWORDS, SIMBOLOS
 from syntax_analyzer import SyntaxAnalyzer
+from errors import LexicalError
 
 
-# ====================================
-# Python Lexical Analyzer
-# ====================================
 class LexerPython:
     TOKEN_REGEX = [
         (r"[ \t]+", None),              # ignore spaces/tabs (not at line start)
@@ -56,7 +54,7 @@ class LexerPython:
                         indent_stack.pop()
                         tokens.append(Token(TokenType.DEDENT, "DEDENT", self.line))
                     if indent_count != indent_stack[-1]:
-                        raise Exception(f"Erro léxico na linha {self.line}: indentação inconsistente")
+                        raise LexicalError(self.line, "indentação inconsistente")
 
                 # Tokenize the rest of the line starting at i
                 self._tokenize_segment(line[i:], tokens)
@@ -91,8 +89,8 @@ class LexerPython:
                                 out_tokens.append(Token(TokenType.KEYWORD, lexeme, self.line))
                             else:
                                 if len(lexeme) > 20:
-                                    raise Exception(
-                                        f"Erro léxico na linha {self.line}: identificador com mais de 20 caracteres"
+                                    raise LexicalError(
+                                        self.line, "identificador com mais de 20 caracteres"
                                     )
                                 out_tokens.append(Token(tipo, lexeme, self.line))
                         elif tipo == TokenType.NUMBER:
@@ -103,14 +101,10 @@ class LexerPython:
                     if tipo == TokenType.NUMBER and pos < n:
                         nxt = segment[pos]
                         if nxt.isalpha() or nxt == "_":
-                            raise Exception(
-                                f"Erro léxico na linha {self.line}: identificador iniciando com número"
-                            )
+                            raise LexicalError(self.line, "identificador iniciando com número")
                     break
             if not match:
-                raise Exception(
-                    f"Erro léxico na linha {self.line}: caractere inesperado '{segment[pos]}'"
-                )
+                raise LexicalError(self.line, f"caractere inesperado '{segment[pos]}'")
 
 __all__ = [
     "LexerPython",

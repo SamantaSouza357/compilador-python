@@ -52,7 +52,7 @@ class SyntaxAnalyzer:
             BreakHandler(),
             ContinueHandler(),
             AssignHandler(),
-            ExprHandler(),  # fallback
+            ExprHandler(),
         ]
 
     # Utilities --------------------------------------------
@@ -115,9 +115,6 @@ class SyntaxAnalyzer:
                 return h.parse(self, ctx)
         t = self.current
         raise SyntaxErrorCompilador(t.linha, f"comando inesperado '{t.lexema}'")
-
-    # Expressions are handled by ExpressionParser
-
 
 __all__ = [
     "SyntaxAnalyzer",
