@@ -8,7 +8,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from compilador import LexerPython, TokenType
+from lexer_analyzer import LexerPython, TokenType
 
 class TestLexer(unittest.TestCase):
     def test_tokens_for_entire_example_file(self):
@@ -30,6 +30,9 @@ class TestLexer(unittest.TestCase):
             (TokenType.DELIMITER, ":"),
             (TokenType.NEWLINE, "\n"),
 
+            # INDENT
+            (TokenType.INDENT, "INDENT"),
+
             #     if x>y:\n
             (TokenType.KEYWORD, "if"),
             (TokenType.IDENTIFIER, "x"),
@@ -38,15 +41,24 @@ class TestLexer(unittest.TestCase):
             (TokenType.DELIMITER, ":"),
             (TokenType.NEWLINE, "\n"),
 
+            # INDENT
+            (TokenType.INDENT, "INDENT"),
+
             #         return x\n
             (TokenType.KEYWORD, "return"),
             (TokenType.IDENTIFIER, "x"),
             (TokenType.NEWLINE, "\n"),
 
+            # DEDENT
+            (TokenType.DEDENT, "DEDENT"),
+
             #     else:\n
             (TokenType.KEYWORD, "else"),
             (TokenType.DELIMITER, ":"),
             (TokenType.NEWLINE, "\n"),
+
+            # INDENT
+            (TokenType.INDENT, "INDENT"),
 
             #         return y\n
             (TokenType.KEYWORD, "return"),
@@ -55,6 +67,10 @@ class TestLexer(unittest.TestCase):
 
             # blank line
             (TokenType.NEWLINE, "\n"),
+
+            # Saída do bloco else e do bloco da função (dois DEDENTs na próxima linha)
+            (TokenType.DEDENT, "DEDENT"),
+            (TokenType.DEDENT, "DEDENT"),
 
             # x=1\n
             (TokenType.IDENTIFIER, "x"),
@@ -79,13 +95,14 @@ class TestLexer(unittest.TestCase):
             (TokenType.DELIMITER, ")"),
             (TokenType.NEWLINE, "\n"),
 
-            # print("A soma é:",r)
+            # print("A soma é:",r)\n
             (TokenType.IDENTIFIER, "print"),
             (TokenType.DELIMITER, "("),
             (TokenType.STRING, '"A soma é:"'),
             (TokenType.DELIMITER, ","),
             (TokenType.IDENTIFIER, "r"),
             (TokenType.DELIMITER, ")"),
+            (TokenType.NEWLINE, "\n"),
 
             # EOF
             (TokenType.EOF, "EOF"),

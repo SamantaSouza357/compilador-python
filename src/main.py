@@ -1,6 +1,6 @@
 import argparse
-from compilador import LexerPython
-
+from lexer_analyzer import LexerPython
+from syntax_analyzer import SyntaxAnalyzer
 
 def main():
     parser = argparse.ArgumentParser(
@@ -19,9 +19,13 @@ def main():
 
     lexer = LexerPython(codigo)
     tokens = lexer.get_tokens()
-
+    
     for t in tokens:
         print(t)
+
+    syntax = SyntaxAnalyzer(tokens)
+    ast = syntax.parse()
+    print("Programa sintaticamente correto.")
 
 if __name__ == "__main__":
     main()
