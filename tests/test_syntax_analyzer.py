@@ -25,7 +25,7 @@ from syntax_analyzer import (
 
 class TestSyntaxAnalyzer(unittest.TestCase):
     def test_parse_example_program_ast_shape(self):
-        example_path = ROOT / "tests" / "files" / "exemplo.py"
+        example_path = ROOT / "tests" / "files" / "exemplo.txt"
         source = example_path.read_text(encoding="utf-8")
 
         tokens = LexerPython(source).get_tokens()

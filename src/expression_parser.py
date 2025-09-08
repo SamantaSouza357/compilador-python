@@ -1,5 +1,5 @@
 from tokens import TokenType
-from ast_nodes import BinaryOperation, Literal, Identifier, Call
+from ast_nodes import BinaryOperation, Literal, Identifier, Call, UnaryOp
 from errors import SyntaxErrorCompilador
 
 
@@ -37,6 +37,13 @@ class ExpressionParser:
         return left
 
     def parse_primary(self, parser):
+        # Unary minus (prefix)
+        if parser.check(TokenType.OPERATOR) and parser.current.lexema == "-":
+            parser.advance()
+            # Use a high precedence to bind tightly (higher than multiplicative)
+            operand = self.parse_expression(parser, 25)
+            return UnaryOp("-", operand)
+
         # Parênteses
         if parser.match(TokenType.DELIMITER, "("):
             expr = self.parse_expression(parser, 0)

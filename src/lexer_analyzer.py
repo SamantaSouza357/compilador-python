@@ -11,8 +11,12 @@ class LexerPython:
         (r"\"[^\"]*\"|\'[^\']*\'", TokenType.STRING),  # strings
         (r"[0-9]+(\.[0-9]+)?", TokenType.NUMBER),      # numbers
         (r"[A-Za-z_][A-Za-z0-9_]*", TokenType.IDENTIFIER), # identifiers and keywords
-        (r"[+\-*/%//<>!]+", TokenType.OPERATOR),      # operators
-        (r"[=]+", TokenType.ASSIGN),   
+        # multi-char operators first
+        (r"(//|==|!=|>=|<=)", TokenType.OPERATOR),
+        # single-char operators
+        (r"[+\-*/%<>]", TokenType.OPERATOR),
+        # assignment '='
+        (r"=", TokenType.ASSIGN),
         (r"[\(\)\[\]\{\},.:]", TokenType.DELIMITER),   # delimiters
         (r"\r?\n", TokenType.NEWLINE),                    # line break (supports CRLF)
     ]
@@ -21,6 +25,9 @@ class LexerPython:
         self.source = source
         self.line = 1
         self.pos = 0
+        # State for triple-quoted block comments
+        self._in_block_comment = False
+        self._block_comment_delim = None  # """ or '''
 
     def get_tokens(self):
         tokens = []
@@ -36,8 +43,15 @@ class LexerPython:
             stripped = line.lstrip(" \t")
             is_blank = stripped == "" or stripped.startswith("#")
 
-            # If not blank, compute indentation and emit INDENT/DEDENT
-            if not is_blank:
+            # Handle ongoing triple-quoted block comment: ignore content
+            if self._in_block_comment:
+                # End block comment if the closing delimiter appears on this line
+                if self._block_comment_delim and self._block_comment_delim in stripped:
+                    self._in_block_comment = False
+                    self._block_comment_delim = None
+                # Still emit NEWLINE for the line below
+            # If not blank and not in block comment start, compute indentation
+            elif not is_blank:
                 # Count leading spaces/tabs
                 i = 0
                 indent_count = 0
@@ -56,8 +70,20 @@ class LexerPython:
                     if indent_count != indent_stack[-1]:
                         raise LexicalError(self.line, "indentação inconsistente")
 
-                # Tokenize the rest of the line starting at i
-                self._tokenize_segment(line[i:], tokens)
+                # Tokenize the rest of the line starting at i, or detect block comment
+                segment = line[i:]
+                # Start of triple-quoted block comment used as comment/docstring
+                if segment.startswith('"""') or segment.startswith("'''"):
+                    delim = '"""' if segment.startswith('"""') else "'''"
+                    self._in_block_comment = True
+                    self._block_comment_delim = delim
+                    # If it also ends on the same line, close immediately
+                    if segment.count(delim) >= 2:
+                        self._in_block_comment = False
+                        self._block_comment_delim = None
+                    # Do not emit any tokens for this content (treated as comment)
+                else:
+                    self._tokenize_segment(segment, tokens)
             # Even for blank/comment-only lines, emit NEWLINE
             tokens.append(Token(TokenType.NEWLINE, "\n", self.line))
             self.line += 1

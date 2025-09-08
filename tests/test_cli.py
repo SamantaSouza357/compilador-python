@@ -13,7 +13,7 @@ import main
 
 class TestCLI(unittest.TestCase):
     def test_cli_prints_tokens_for_file(self):
-        file_path = ROOT / "tests" / "files" / "exemplo.py"
+        file_path = ROOT / "tests" / "files" / "exemplo.txt"
 
         argv_backup = sys.argv[:]
         try:

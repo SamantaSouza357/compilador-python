@@ -1,0 +1,11 @@
+def soma(a, b):
+    if a==b:
+        return a
+    else:
+        return a+b
+
+x=1
+y=2
+r=soma(x,y)
+print("ok", r)
+

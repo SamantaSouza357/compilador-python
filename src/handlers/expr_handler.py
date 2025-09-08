@@ -7,6 +7,9 @@ class ExprHandler(StatementHandler):
         t = parser.current
         if t is None:
             return False
+        # allow leading unary '-' expressions
+        if t.tipo == TokenType.OPERATOR and t.lexema == "-":
+            return True
         if t.tipo in (TokenType.IDENTIFIER, TokenType.NUMBER, TokenType.STRING):
             return True
         if t.tipo == TokenType.KEYWORD and t.lexema in ("True", "False"):

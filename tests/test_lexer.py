@@ -13,7 +13,7 @@ from lexer_analyzer import LexerPython, TokenType
 class TestLexer(unittest.TestCase):
     def test_tokens_for_entire_example_file(self):
         
-        example = (ROOT / "tests" / "files" / "exemplo.py").read_text(encoding="utf-8")
+        example = (ROOT / "tests" / "files" / "exemplo.txt").read_text(encoding="utf-8")
 
         lexer = LexerPython(example)
         tokens = lexer.get_tokens()
