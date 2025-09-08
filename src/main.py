@@ -17,15 +17,18 @@ def main():
     with open(args.file, "r", encoding="utf-8") as f:
         codigo = f.read()
 
-    lexer = LexerPython(codigo)
-    tokens = lexer.get_tokens()
-    
-    for t in tokens:
-        print(t)
+    try:
+        lexer = LexerPython(codigo)
+        tokens = lexer.get_tokens()
 
-    syntax = SyntaxAnalyzer(tokens)
-    ast = syntax.parse()
-    print("Programa sintaticamente correto.")
+        for t in tokens:
+            print(t)
+
+        syntax = SyntaxAnalyzer(tokens)
+        ast = syntax.parse()
+        print("Programa sintaticamente correto.")
+    except Exception as e:
+        print(str(e))
 
 if __name__ == "__main__":
     main()
