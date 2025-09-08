@@ -84,7 +84,7 @@ class ExpressionParser:
             return ident
 
         t = parser.current
-        raise SyntaxErrorCompilador(t.linha, f"fator inesperado '{t.lexema}'")
+        raise SyntaxErrorCompilador(t.linha, f"Esperado uma expressão e foi encontrado '{t.tipo}'")
 
     def _peek_operator(self, parser):
         t = parser.current
@@ -97,6 +97,20 @@ class ExpressionParser:
         if t.tipo == TokenType.ASSIGN and t.lexema in self.PRECEDENCE:
             return t.lexema
         return None
+
+    def _can_start_expression(self, parser) -> bool:
+        t = parser.current
+        if t is None:
+            return False
+        if t.tipo == TokenType.OPERATOR and t.lexema == "-":
+            return True
+        if t.tipo in (TokenType.IDENTIFIER, TokenType.NUMBER, TokenType.STRING):
+            return True
+        if t.tipo == TokenType.KEYWORD and t.lexema in ("True", "False"):
+            return True
+        if t.tipo == TokenType.DELIMITER and t.lexema == "(":
+            return True
+        return False
 
 
 __all__ = ["ExpressionParser"]

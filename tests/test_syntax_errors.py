@@ -52,10 +52,11 @@ class TestSyntaxErrors(unittest.TestCase):
             "    return\n"
         )
         tokens = LexerPython(code).get_tokens()
-        with self.assertRaises(SyntaxErrorCompilador) as ctx:
-            SyntaxAnalyzer(tokens).parse()
-        self.assertEqual(ctx.exception.linha, 2)
-        self.assertIn("fator inesperado", str(ctx.exception))
+        ast = SyntaxAnalyzer(tokens).parse()
+        func = ast.statements[0]
+        self.assertEqual(func.name, "f")
+        ret = func.body.statements[0]
+        self.assertIsNone(ret.expr)
 
     def test_else_without_if(self):
         code = (
