@@ -1,13 +1,18 @@
-from tokens import TokenType
+from __future__ import annotations
+
+from typing import Optional
+
+from lexer.tokens import TokenType
 from .base import StatementHandler
-from ast_nodes import FunctionDeclaration
+from syntax.ast_nodes import FunctionDeclaration
+from syntax.parse_context import ParseContext
 
 
 class DefHandler(StatementHandler):
-    def can_handle(self, parser, ctx=None) -> bool:
+    def can_handle(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> bool:
         return parser.check(TokenType.KEYWORD, "def")
 
-    def parse(self, parser, ctx=None):
+    def parse(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> FunctionDeclaration:
         parser.consume(TokenType.KEYWORD, "def", msg="Esperado 'def'")
         name = parser.consume(
             TokenType.IDENTIFIER, msg="Esperado identificador do nome da função"
@@ -30,3 +35,4 @@ class DefHandler(StatementHandler):
         return FunctionDeclaration(name, params, body)
 
 __all__ = ["DefHandler"]
+

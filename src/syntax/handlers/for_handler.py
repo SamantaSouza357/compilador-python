@@ -1,13 +1,18 @@
-from tokens import TokenType
+from __future__ import annotations
+
+from typing import Optional
+
+from lexer.tokens import TokenType
 from .base import StatementHandler
-from ast_nodes import ForStatement
+from syntax.ast_nodes import ForStatement
+from syntax.parse_context import ParseContext
 
 
 class ForHandler(StatementHandler):
-    def can_handle(self, parser, ctx=None) -> bool:
+    def can_handle(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> bool:
         return parser.check(TokenType.KEYWORD, "for")
 
-    def parse(self, parser, ctx=None):
+    def parse(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> ForStatement:
         parser.consume(TokenType.KEYWORD, "for")
         var_name = parser.consume(
             TokenType.IDENTIFIER, msg="Esperado identificador do iterador"
@@ -21,3 +26,4 @@ class ForHandler(StatementHandler):
         return ForStatement(var_name, iterable, body)
 
 __all__ = ["ForHandler"]
+

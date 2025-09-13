@@ -1,11 +1,15 @@
-from tokens import TokenType
-from ast_nodes import BinaryOperation, Literal, Identifier, Call, UnaryOp
-from errors import SyntaxErrorCompilador
+from __future__ import annotations
+
+from typing import Dict, Optional, Tuple
+
+from lexer.tokens import TokenType
+from syntax.ast_nodes import ASTNode, BinaryOperation, Literal, Identifier, Call, UnaryOp
+from syntax.errors import SyntaxErrorCompilador
 
 
 class ExpressionParser:
     # precedência (maior vence) e associatividade (L = esquerda)
-    PRECEDENCE = {
+    PRECEDENCE: Dict[str, Tuple[int, str]] = {
         "*": (20, "L"),
         "/": (20, "L"),
         "//": (20, "L"),
@@ -20,7 +24,7 @@ class ExpressionParser:
         "<=": (5, "L"),
     }
 
-    def parse_expression(self, parser, min_prec: int = 0):
+    def parse_expression(self, parser: "SyntaxAnalyzer", min_prec: int = 0) -> ASTNode:
         left = self.parse_primary(parser)
         while True:
             op = self._peek_operator(parser)
@@ -36,7 +40,7 @@ class ExpressionParser:
             left = BinaryOperation(left, op, right)
         return left
 
-    def parse_primary(self, parser):
+    def parse_primary(self, parser: "SyntaxAnalyzer") -> ASTNode:
         # Unary minus (prefix)
         if parser.check(TokenType.OPERATOR) and parser.current.lexema == "-":
             parser.advance()
@@ -86,7 +90,7 @@ class ExpressionParser:
         t = parser.current
         raise SyntaxErrorCompilador(t.linha, f"Esperado uma expressão e foi encontrado '{t.tipo}'")
 
-    def _peek_operator(self, parser):
+    def _peek_operator(self, parser: "SyntaxAnalyzer") -> Optional[str]:
         t = parser.current
         if t is None:
             return None
@@ -98,7 +102,7 @@ class ExpressionParser:
             return t.lexema
         return None
 
-    def _can_start_expression(self, parser) -> bool:
+    def _can_start_expression(self, parser: "SyntaxAnalyzer") -> bool:
         t = parser.current
         if t is None:
             return False

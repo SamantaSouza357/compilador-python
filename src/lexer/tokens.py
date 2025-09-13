@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 
 
@@ -69,12 +71,12 @@ SIMBOLOS = {
 
 
 class Token:
-    def __init__(self, tipo, lexema, linha):
-        self.tipo = tipo
-        self.lexema = lexema
-        self.linha = linha
+    def __init__(self, tipo: TokenType, lexema: str, linha: int) -> None:
+        self.tipo: TokenType = tipo
+        self.lexema: str = lexema
+        self.linha: int = linha
 
-    def __str__(self):
+    def __str__(self) -> str:
         nome = self.tipo.value
 
         if self.tipo == TokenType.DELIMITER and self.lexema in SIMBOLOS:
@@ -101,3 +103,4 @@ __all__ = [
     "KEYWORDS",
     "SIMBOLOS",
 ]
+

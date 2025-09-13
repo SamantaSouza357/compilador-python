@@ -1,13 +1,18 @@
-from tokens import TokenType
+from __future__ import annotations
+
+from typing import Optional
+
+from lexer.tokens import TokenType
 from .base import StatementHandler
-from ast_nodes import WhileStatement
+from syntax.ast_nodes import WhileStatement
+from syntax.parse_context import ParseContext
 
 
 class WhileHandler(StatementHandler):
-    def can_handle(self, parser, ctx=None) -> bool:
+    def can_handle(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> bool:
         return parser.check(TokenType.KEYWORD, "while")
 
-    def parse(self, parser, ctx=None):
+    def parse(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> WhileStatement:
         parser.consume(TokenType.KEYWORD, "while")
         cond = parser.expr_parser.parse_expression(parser)
         parser.consume(TokenType.DELIMITER, ":", msg="Esperado ':' após condição do while")
@@ -17,3 +22,4 @@ class WhileHandler(StatementHandler):
         return WhileStatement(cond, body)
 
 __all__ = ["WhileHandler"]
+

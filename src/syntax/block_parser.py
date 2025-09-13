@@ -1,15 +1,28 @@
-from tokens import TokenType
-from ast_nodes import Block
+from __future__ import annotations
+
+from typing import Callable, Optional
+
+from lexer.tokens import TokenType
+from syntax.ast_nodes import Block, ASTNode
+from syntax.parse_context import ParseContext
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:  # avoid circular import at runtime
+    from syntax.syntax_analyzer import SyntaxAnalyzer
 
 
 class BlockParser:
-    def parse_block(self, parser, ctx, parse_one):
+    def parse_block(
+        self,
+        parser: SyntaxAnalyzer,
+        ctx: Optional[ParseContext],
+        parse_one: Callable[[ParseContext], ASTNode],
+    ) -> Block:
         # Allow leading blank lines (NEWLINE) and comment-only lines before INDENT
         parser.skip_newlines()
         # Consume required INDENT and then parse until DEDENT
         parser.consume(TokenType.INDENT, msg="Esperado INDENT para iniciar bloco")
         parser.skip_newlines()
-        statements = []
+        statements: list[ASTNode] = []
         while not parser.check(TokenType.EOF) and not parser.check(TokenType.DEDENT):
             stmt = parse_one(ctx)
             statements.append(stmt)

@@ -8,8 +8,8 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from lexer_analyzer import LexerPython
-from syntax_analyzer import (
+from lexer import LexerPython
+from syntax import (
     SyntaxAnalyzer,
     Program,
     FunctionDeclaration,
@@ -85,4 +85,3 @@ class TestSyntaxAnalyzer(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

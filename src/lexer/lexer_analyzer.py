@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import re
-from tokens import TokenType, Token, KEYWORDS, SIMBOLOS
-from syntax_analyzer import SyntaxAnalyzer
-from errors import LexicalError
+from typing import List
+
+from lexer.tokens import TokenType, Token, KEYWORDS, SIMBOLOS
+from syntax.syntax_analyzer import SyntaxAnalyzer
+from lexer.errors import LexicalError
 
 
 class LexerPython:
@@ -21,17 +25,17 @@ class LexerPython:
         (r"\r?\n", TokenType.NEWLINE),                    # line break (supports CRLF)
     ]
 
-    def __init__(self, source):
-        self.source = source
-        self.line = 1
-        self.pos = 0
+    def __init__(self, source: str) -> None:
+        self.source: str = source
+        self.line: int = 1
+        self.pos: int = 0
         # State for triple-quoted block comments
-        self._in_block_comment = False
-        self._block_comment_delim = None  # """ or '''
+        self._in_block_comment: bool = False
+        self._block_comment_delim: str | None = None  # """ or '''
 
-    def get_tokens(self):
-        tokens = []
-        indent_stack = [0]
+    def get_tokens(self) -> List[Token]:
+        tokens: List[Token] = []
+        indent_stack: List[int] = [0]
 
         # Iterate line by line, preserving line endings ("\n")
         lines = self.source.splitlines(keepends=True)
@@ -96,7 +100,7 @@ class LexerPython:
         tokens.append(Token(TokenType.EOF, "EOF", self.line))
         return tokens
 
-    def _tokenize_segment(self, segment, out_tokens):
+    def _tokenize_segment(self, segment: str, out_tokens: List[Token]) -> None:
         # Tokenize a slice of a line (no newline here)
         pos = 0
         n = len(segment)

@@ -8,8 +8,8 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from lexer_analyzer import LexerPython
-from syntax_analyzer import (
+from lexer import LexerPython
+from syntax import (
     SyntaxAnalyzer,
     Program,
     WhileStatement,
@@ -19,8 +19,8 @@ from syntax_analyzer import (
     VarAssign,
     Literal,
     Identifier,
+    SyntaxErrorCompilador,
 )
-from errors import SyntaxErrorCompilador
 
 
 def parse_source(source: str) -> Program:
@@ -113,4 +113,3 @@ class TestLoops(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

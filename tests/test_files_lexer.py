@@ -7,9 +7,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from lexer_analyzer import LexerPython
-from tokens import TokenType
-from errors import LexicalError
+from lexer import LexerPython, TokenType, LexicalError
 
 
 class TestFilesLexer(unittest.TestCase):
@@ -42,4 +40,3 @@ class TestFilesLexer(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

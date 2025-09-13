@@ -1,6 +1,6 @@
 import argparse
-from lexer_analyzer import LexerPython
-from syntax_analyzer import SyntaxAnalyzer
+from lexer import LexerPython
+from syntax import SyntaxAnalyzer
 
 def main():
     parser = argparse.ArgumentParser(
