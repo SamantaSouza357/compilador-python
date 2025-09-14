@@ -1,9 +1,12 @@
+"""Definições de tokens para o léxico (tipos, palavras-chave, símbolos e classe Token)."""
+
+from __future__ import annotations
+
 from enum import Enum
 
-# ====================================
-# Definição de tipos de tokens e dados
-# ====================================
+
 class TokenType(Enum):
+    """Todos os tipos de token produzidos pelo léxico."""
     KEYWORD = "KEYWORD"
     IDENTIFIER = "IDENTIFIER"
     NUMBER = "NUMBER"
@@ -17,7 +20,7 @@ class TokenType(Enum):
     ASSIGN = "ASSIGN"
 
 
-# Palavras reservadas do Python
+# Palavras‑chave reservadas do Python
 KEYWORDS = {
     "def",
     "class",
@@ -71,12 +74,14 @@ SIMBOLOS = {
 
 
 class Token:
-    def __init__(self, tipo, lexema, linha):
-        self.tipo = tipo
-        self.lexema = lexema
-        self.linha = linha
+    """Um token léxico com tipo, lexema original e linha de origem."""
 
-    def __str__(self):
+    def __init__(self, tipo: TokenType, lexema: str, linha: int) -> None:
+        self.tipo: TokenType = tipo
+        self.lexema: str = lexema
+        self.linha: int = linha
+
+    def __str__(self) -> str:
         nome = self.tipo.value
 
         if self.tipo == TokenType.DELIMITER and self.lexema in SIMBOLOS:
@@ -103,4 +108,3 @@ __all__ = [
     "KEYWORDS",
     "SIMBOLOS",
 ]
-

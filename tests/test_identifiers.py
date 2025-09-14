@@ -2,13 +2,13 @@ import unittest
 from pathlib import Path
 import sys
 
-# Ensure `src` is importable
+# Garante que `src` seja importável
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from compilador import LexerPython, TokenType
+from lexer import LexerPython, TokenType
 
 
 class TestIdentifiers(unittest.TestCase):
@@ -35,7 +35,7 @@ class TestIdentifiers(unittest.TestCase):
         self.assertEqual(tokens[-1].tipo, TokenType.EOF)
 
     def test_identifier_too_long_raises_error(self):
-        long_ident = "a" * 21  # 21 chars
+        long_ident = "a" * 21  # 21 caracteres
         code = f"{long_ident}\n"
         with self.assertRaises(Exception) as ctx:
             LexerPython(code).get_tokens()

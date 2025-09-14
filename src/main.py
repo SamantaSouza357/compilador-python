@@ -1,10 +1,13 @@
-import argparse
-from compilador import LexerPython
+"""Ponto de entrada da linha de comando para executar o léxico e o parser."""
 
+import argparse
+from lexer import LexerPython
+from syntax import SyntaxAnalyzer
 
 def main():
+    """Lê os argumentos, realiza a análise léxica e sintática e imprime os resultados."""
     parser = argparse.ArgumentParser(
-        description="Analisador léxico simples para Python."
+        description="Compilador para Python."
     )
     parser.add_argument(
         "--file",
@@ -17,11 +20,18 @@ def main():
     with open(args.file, "r", encoding="utf-8") as f:
         codigo = f.read()
 
-    lexer = LexerPython(codigo)
-    tokens = lexer.get_tokens()
+    try:
+        lexer = LexerPython(codigo)
+        tokens = lexer.get_tokens()
 
-    for t in tokens:
-        print(t)
+        for t in tokens:
+            print(t)
+
+        syntax = SyntaxAnalyzer(tokens)
+        ast = syntax.parse()
+        print("Programa sintaticamente correto.")
+    except Exception as e:
+        print(str(e))
 
 if __name__ == "__main__":
     main()

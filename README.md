@@ -1,0 +1,101 @@
+# Compilador Python — Léxico e Sintaxe (pt-BR)
+
+Projeto didático de um mini “compilador”/analisador para uma linguagem estilo Python:
+- Léxico: transforma código-fonte em tokens (incluindo INDENT/DEDENT por indentação)
+- Sintaxe: monta AST com cadeia de handlers (def, if/else, for/while, return, atribuição, break/continue, expressões)
+- Testes: suíte cobrindo léxico, sintaxe, precedência, unário, contexto e arquivos de exemplo
+
+Os comentários e docstrings estão em português; os identificadores do código permanecem em inglês para clareza técnica.
+
+## Requisitos
+
+- Python 3.9+ (testado com 3.9)
+
+## Estrutura do projeto (resumo)
+
+- `src/lexer/lexer_analyzer.py`: Léxico (gera tokens, INDENT/DEDENT)
+- `src/lexer/tokens.py`: Tipos de token, palavras‑chave, símbolos
+- `src/lexer/errors.py`: `LexicalError`
+- `src/syntax/token_stream.py`: Cursor leve sobre tokens (peek/advance/consume)
+- `src/syntax/syntax_analyzer.py`: Parser principal (cadeia de handlers → AST)
+- `src/syntax/ast_nodes.py`: Nós da AST (Program, Block, IfStatement, etc.)
+- `src/syntax/expression_parser.py`: Parser de expressões (estilo Pratt)
+- `src/syntax/block_parser.py`: Parsing de blocos por indentação
+- `src/syntax/errors.py`: `SyntaxErrorCompilador`
+- `src/syntax/handlers/*.py`: Handlers para cada comando
+- `tests/`: suíte de testes e arquivos de exemplo em `tests/files`
+
+## Como rodar (exemplos com os arquivos em `tests/files`)
+
+1) Análise léxica e sintática via CLI
+
+```bash
+python3 src/main.py -f tests/files/exemplo_valido.txt
+```
+
+Saída esperada (resumo):
+- Impressão dos tokens, um por linha (com linha/átomo/lexema)
+- Mensagem “Programa sintaticamente correto.” seguida de uma representação da AST
+
+2) Arquivo com linhas em branco e comentários
+
+```bash
+python3 src/main.py -f tests/files/exemplo_linhas_em_branco.txt
+```
+
+O parser ignora NEWLINEs iniciais dentro de blocos; o programa ainda é válido.
+
+3) Erro léxico (caractere inesperado)
+
+```bash
+python3 src/main.py -f tests/files/exemplo_erro_lexico.txt
+```
+
+Saída (exemplo):
+
+```
+Erro léxico na linha 2: caractere inesperado '$'
+```
+
+4) Erro sintático (faltando dois‑pontos)
+
+```bash
+python3 src/main.py -f tests/files/exemplo_erro_sintatico.txt
+```
+
+Saída (exemplo):
+
+```
+Erro de sintaxe na linha 2: Esperado ':' …
+```
+
+## Rodando a suíte de testes
+
+- Todos os testes (rápido):
+
+```bash
+python3 -m unittest discover -s tests -q
+```
+
+- Teste único:
+
+```bash
+python3 -m unittest tests/test_lexer.py -q
+```
+
+## Como funciona (visão rápida)
+
+1. O Léxico lê o texto e gera uma lista de tokens, com controle de indentação (INDENT/DEDENT) por nível de espaços/tabs no início de cada linha.
+2. O `TokenStream` centraliza a navegação nos tokens (peek/advance/consume/skip_newlines).
+3. O `SyntaxAnalyzer.parse()` percorre os tokens e, para cada comando, consulta a cadeia de handlers. O primeiro que “casa” consome os tokens daquele comando e devolve um nó de AST.
+4. Expressões são analisadas por `ExpressionParser` (Pratt), respeitando precedência/associatividade e chamadas encadeadas.
+
+## Estendendo
+
+- Para suportar um novo comando, crie um handler em `src/syntax/handlers/novo_handler.py` e registre-o na lista em `src/syntax/syntax_analyzer.py` (ordem importa).
+- Para novos operadores de expressão, ajuste a tabela `PRECEDENCE` em `src/syntax/expression_parser.py` e garanta que o léxico reconheça o token.
+
+## Licença
+
+Uso educacional. Adapte conforme necessário.
+

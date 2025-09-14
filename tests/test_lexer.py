@@ -2,18 +2,18 @@ import unittest
 from pathlib import Path
 import sys
 
-# Ensure `src` is importable
+# Garante que `src` seja importável
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from compilador import LexerPython, TokenType
+from lexer import LexerPython, TokenType
 
 class TestLexer(unittest.TestCase):
     def test_tokens_for_entire_example_file(self):
         
-        example = (ROOT / "tests" / "files" / "exemplo.py").read_text(encoding="utf-8")
+        example = (ROOT / "tests" / "files" / "exemplo_valido.txt").read_text(encoding="utf-8")
 
         lexer = LexerPython(example)
         tokens = lexer.get_tokens()
@@ -30,6 +30,9 @@ class TestLexer(unittest.TestCase):
             (TokenType.DELIMITER, ":"),
             (TokenType.NEWLINE, "\n"),
 
+            # INDENT (início de bloco)
+            (TokenType.INDENT, "INDENT"),
+
             #     if x>y:\n
             (TokenType.KEYWORD, "if"),
             (TokenType.IDENTIFIER, "x"),
@@ -38,23 +41,36 @@ class TestLexer(unittest.TestCase):
             (TokenType.DELIMITER, ":"),
             (TokenType.NEWLINE, "\n"),
 
+            # INDENT (início de bloco)
+            (TokenType.INDENT, "INDENT"),
+
             #         return x\n
             (TokenType.KEYWORD, "return"),
             (TokenType.IDENTIFIER, "x"),
             (TokenType.NEWLINE, "\n"),
+
+            # DEDENT (fim de bloco)
+            (TokenType.DEDENT, "DEDENT"),
 
             #     else:\n
             (TokenType.KEYWORD, "else"),
             (TokenType.DELIMITER, ":"),
             (TokenType.NEWLINE, "\n"),
 
+            # INDENT (início de bloco)
+            (TokenType.INDENT, "INDENT"),
+
             #         return y\n
             (TokenType.KEYWORD, "return"),
             (TokenType.IDENTIFIER, "y"),
             (TokenType.NEWLINE, "\n"),
 
-            # blank line
+            # linha em branco
             (TokenType.NEWLINE, "\n"),
+
+            # Saída do bloco else e do bloco da função (dois DEDENTs na próxima linha)
+            (TokenType.DEDENT, "DEDENT"),
+            (TokenType.DEDENT, "DEDENT"),
 
             # x=1\n
             (TokenType.IDENTIFIER, "x"),
@@ -79,15 +95,16 @@ class TestLexer(unittest.TestCase):
             (TokenType.DELIMITER, ")"),
             (TokenType.NEWLINE, "\n"),
 
-            # print("A soma é:",r)
+            # print("A soma é:",r)\n
             (TokenType.IDENTIFIER, "print"),
             (TokenType.DELIMITER, "("),
             (TokenType.STRING, '"A soma é:"'),
             (TokenType.DELIMITER, ","),
             (TokenType.IDENTIFIER, "r"),
             (TokenType.DELIMITER, ")"),
+            (TokenType.NEWLINE, "\n"),
 
-            # EOF
+            # EOF (fim do arquivo)
             (TokenType.EOF, "EOF"),
         ]
 
@@ -95,7 +112,7 @@ class TestLexer(unittest.TestCase):
         self.assertEqual(got, expected)
 
     def test_lexical_error_unexpected_character_and_line(self):
-        # Error on line 2 with unexpected '$'
+        # Erro na linha 2 com '$' inesperado
         code = "x=1\n$\n"
         lexer = LexerPython(code)
         with self.assertRaises(Exception) as ctx:
