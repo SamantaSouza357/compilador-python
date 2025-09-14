@@ -17,7 +17,7 @@ class ReturnHandler(StatementHandler):
 
     def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> ReturnStatement:
         parser.ts.consume(TokenType.KEYWORD, "return")
-        # Optional expression: if the next token can start an expression, parse it; otherwise return None
+        # Expressão opcional: se o próximo token puder iniciar uma expressão, analisa; caso contrário, None
         if parser.expr_parser._can_start_expression(parser):
             expr = parser.expr_parser.parse_expression(parser)
         else:

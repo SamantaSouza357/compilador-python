@@ -17,7 +17,7 @@ class ExprHandler(StatementHandler):
         t = parser.ts.current
         if t is None:
             return False
-        # allow leading unary '-' expressions
+        # permite expressões iniciadas por unário '-'
         if t.tipo == TokenType.OPERATOR and t.lexema == "-":
             return True
         if t.tipo in (TokenType.IDENTIFIER, TokenType.NUMBER, TokenType.STRING):

@@ -17,7 +17,7 @@ class TestFilesLexer(unittest.TestCase):
     def test_valid_simple_tokens(self):
         code = self.read("exemplo_valido.txt")
         tokens = LexerPython(code).get_tokens()
-        # Ensure we got EOF and at least one INDENT/DEDENT for function
+        # Garante que recebemos EOF e pelo menos um INDENT/DEDENT para a função
         kinds = [t.tipo for t in tokens]
         self.assertIn(TokenType.INDENT, kinds)
         self.assertIn(TokenType.DEDENT, kinds)
@@ -26,7 +26,7 @@ class TestFilesLexer(unittest.TestCase):
     def test_corner_blank_lines_indent_tokens(self):
         code = self.read("exemplo_linhas_em_branco.txt")
         tokens = LexerPython(code).get_tokens()
-        # Should not raise and should close indentation properly
+        # Não deve lançar erro e deve fechar a indentação corretamente
         self.assertEqual(tokens[-1].tipo, TokenType.EOF)
 
     def test_invalid_lexical_unexpected_char(self):

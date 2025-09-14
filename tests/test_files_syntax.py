@@ -34,7 +34,7 @@ class TestFilesSyntax(unittest.TestCase):
         tokens = LexerPython(code).get_tokens()
         with self.assertRaises(SyntaxErrorCompilador) as ctx:
             SyntaxAnalyzer(tokens).parse()
-        # Error should be on line 2 (the line with the if)
+        # O erro deve estar na linha 2 (a linha com o if)
         self.assertEqual(ctx.exception.linha, 2)
 
 

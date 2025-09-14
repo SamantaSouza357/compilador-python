@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 import sys
 
-# Ensure `src` is importable
+# Garante que `src` seja importável
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
@@ -35,14 +35,14 @@ class TestSyntaxAnalyzer(unittest.TestCase):
         self.assertIsInstance(ast, Program)
         self.assertGreaterEqual(len(ast.statements), 5)
 
-        # 1) Function declaration: soma(x, y)
+        # 1) Declaração de função: soma(x, y)
         func = ast.statements[0]
         self.assertIsInstance(func, FunctionDeclaration)
         self.assertEqual(func.name, "soma")
         self.assertEqual(func.params, ["x", "y"])
         self.assertIsInstance(func.body, Block)
 
-        # Inside function: if ... else ... with returns
+        # Dentro da função: if ... else ... com returns
         self.assertEqual(len(func.body.statements), 1)
         if_stmt = func.body.statements[0]
         self.assertIsInstance(if_stmt, IfStatement)

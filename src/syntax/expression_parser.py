@@ -56,10 +56,10 @@ class ExpressionParser:
 
     def parse_primary(self, parser: SyntaxAnalyzer) -> ASTNode:
         """Parse literals, identifiers, parenthesized expressions, and calls."""
-        # Unary minus (prefix)
+        # Unário menos (prefixo)
         if parser.ts.check(TokenType.OPERATOR) and parser.ts.current.lexema == "-":
             parser.ts.advance()
-            # Use a high precedence to bind tightly (higher than multiplicative)
+            # Usa alta precedência para ligar fortemente (maior que a multiplicativa)
             operand = self.parse_expression(parser, 25)
             return UnaryOp("-", operand)
 

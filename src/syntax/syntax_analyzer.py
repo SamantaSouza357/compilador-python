@@ -72,7 +72,7 @@ class SyntaxAnalyzer:
             ExprHandler(),
         ]
     
-    # Entry point --------------------------------------
+    # Ponto de entrada ---------------------------------
     def parse(self) -> Program:
         """Analisa todo o fluxo de tokens em um nó Program.
 
@@ -89,7 +89,7 @@ class SyntaxAnalyzer:
             self.ts.skip_newlines()
         return Program(stmts)
 
-    # Declarations and Statements ---------------------------------
+    # Declarações e Comandos -----------------------------
     def parse_one(self, ctx: ParseContext) -> ASTNode:
         """Analisa um único comando usando o primeiro handler que corresponder.
 

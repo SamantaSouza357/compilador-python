@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 import sys
 
-# Ensure `src` is importable
+# Garante que `src` seja importável
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
@@ -30,7 +30,7 @@ class TestLexer(unittest.TestCase):
             (TokenType.DELIMITER, ":"),
             (TokenType.NEWLINE, "\n"),
 
-            # INDENT
+            # INDENT (início de bloco)
             (TokenType.INDENT, "INDENT"),
 
             #     if x>y:\n
@@ -41,7 +41,7 @@ class TestLexer(unittest.TestCase):
             (TokenType.DELIMITER, ":"),
             (TokenType.NEWLINE, "\n"),
 
-            # INDENT
+            # INDENT (início de bloco)
             (TokenType.INDENT, "INDENT"),
 
             #         return x\n
@@ -49,7 +49,7 @@ class TestLexer(unittest.TestCase):
             (TokenType.IDENTIFIER, "x"),
             (TokenType.NEWLINE, "\n"),
 
-            # DEDENT
+            # DEDENT (fim de bloco)
             (TokenType.DEDENT, "DEDENT"),
 
             #     else:\n
@@ -57,7 +57,7 @@ class TestLexer(unittest.TestCase):
             (TokenType.DELIMITER, ":"),
             (TokenType.NEWLINE, "\n"),
 
-            # INDENT
+            # INDENT (início de bloco)
             (TokenType.INDENT, "INDENT"),
 
             #         return y\n
@@ -65,7 +65,7 @@ class TestLexer(unittest.TestCase):
             (TokenType.IDENTIFIER, "y"),
             (TokenType.NEWLINE, "\n"),
 
-            # blank line
+            # linha em branco
             (TokenType.NEWLINE, "\n"),
 
             # Saída do bloco else e do bloco da função (dois DEDENTs na próxima linha)
@@ -104,7 +104,7 @@ class TestLexer(unittest.TestCase):
             (TokenType.DELIMITER, ")"),
             (TokenType.NEWLINE, "\n"),
 
-            # EOF
+            # EOF (fim do arquivo)
             (TokenType.EOF, "EOF"),
         ]
 
@@ -112,7 +112,7 @@ class TestLexer(unittest.TestCase):
         self.assertEqual(got, expected)
 
     def test_lexical_error_unexpected_character_and_line(self):
-        # Error on line 2 with unexpected '$'
+        # Erro na linha 2 com '$' inesperado
         code = "x=1\n$\n"
         lexer = LexerPython(code)
         with self.assertRaises(Exception) as ctx:

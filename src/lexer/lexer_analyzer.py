@@ -37,9 +37,9 @@ class LexerPython:
         self.source: str = source
         self.line: int = 1
         self.pos: int = 0
-        # State for triple-quoted block comments
+        # Estado para comentários de bloco com aspas triplas
         self._in_block_comment: bool = False
-        self._block_comment_delim: str | None = None  # """ or '''
+        self._block_comment_delim: str | None = None  # """ ou '''
 
     def get_tokens(self) -> List[Token]:
         """Scan the input and return the list of tokens ending with EOF."""

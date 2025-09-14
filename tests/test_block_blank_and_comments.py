@@ -39,7 +39,7 @@ class TestBlockBlankAndComments(unittest.TestCase):
         self.assertIsInstance(if_stmt.else_block.statements[0], ReturnStatement)
 
     def test_triple_quoted_block_comment_inside_block(self):
-        # Triple-quoted strings used as block comments should be allowed.
+        # Strings com aspas triplas usadas como comentários de bloco devem ser permitidas.
         code = (
             "def f():\n"
             "    \"\"\"\n"
@@ -51,7 +51,7 @@ class TestBlockBlankAndComments(unittest.TestCase):
         tokens = LexerPython(code).get_tokens()
         ast = SyntaxAnalyzer(tokens).parse()
         self.assertIsInstance(ast, Program)
-        # The docstring-like block comment should not become a statement
+        # O comentário de bloco parecido com docstring não deve virar um comando
         func = ast.statements[0]
         self.assertIsInstance(func, FunctionDeclaration)
         self.assertEqual(len(func.body.statements), 2)

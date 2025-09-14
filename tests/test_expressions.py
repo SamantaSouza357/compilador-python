@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 import sys
 
-# Ensure `src` is importable
+# Garante que `src` seja importável
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:

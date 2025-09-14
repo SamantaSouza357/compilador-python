@@ -20,7 +20,7 @@ class TokenType(Enum):
     ASSIGN = "ASSIGN"
 
 
-# Python reserved keywords
+# Palavras‑chave reservadas do Python
 KEYWORDS = {
     "def",
     "class",
@@ -58,7 +58,7 @@ KEYWORDS = {
 }
 
 
-# Symbol table (delimiters)
+# Tabela de símbolos (delimitadores)
 SIMBOLOS = {
     "(": "ABRE_PARENTESES",
     ")": "FECHA_PARENTESES",

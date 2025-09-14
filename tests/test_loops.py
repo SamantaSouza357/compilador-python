@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 import sys
 
-# Ensure `src` is importable
+# Garante que `src` seja importável
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
@@ -87,7 +87,7 @@ class TestLoops(unittest.TestCase):
         tokens = LexerPython(code).get_tokens()
         with self.assertRaises(SyntaxErrorCompilador) as ctx:
             SyntaxAnalyzer(tokens).parse()
-        # Should point to the while line
+        # Deve apontar para a linha do while
         self.assertEqual(ctx.exception.linha, 1)
 
     def test_for_missing_in_raises(self):

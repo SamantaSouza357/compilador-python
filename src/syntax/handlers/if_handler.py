@@ -24,7 +24,7 @@ class IfHandler(StatementHandler):
         parser.ts.consume(TokenType.NEWLINE, msg="Esperado nova linha após ':'")
         then_block = parser.block_parser.parse_block(parser, ctx, parser.parse_one)
 
-        # Optional else branch
+        # Bloco else opcional
         parser.ts.skip_newlines()
         else_block = None
         if parser.ts.check(TokenType.KEYWORD, "else"):

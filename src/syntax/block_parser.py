@@ -8,7 +8,7 @@ from lexer.tokens import TokenType
 from syntax.ast_nodes import Block, ASTNode
 from syntax.parse_context import ParseContext
 from typing import TYPE_CHECKING
-if TYPE_CHECKING:  # avoid circular import at runtime
+if TYPE_CHECKING:  # evitar importação circular em tempo de execução
     from syntax.syntax_analyzer import SyntaxAnalyzer
 
 
@@ -27,9 +27,9 @@ class BlockParser:
         comentários e linhas em branco antes do primeiro comando. Os comandos
         terminam quando um token DEDENT é encontrado no nível de indentação atual.
         """
-        # Allow leading blank lines (NEWLINE) and comment-only lines before INDENT
+        # Permite linhas em branco (NEWLINE) e apenas comentários antes do INDENT
         parser.ts.skip_newlines()
-        # Consume required INDENT and then parse until DEDENT
+        # Consome o INDENT obrigatório e analisa até encontrar o DEDENT
         parser.ts.consume(TokenType.INDENT, msg="Esperado INDENT para iniciar bloco")
         parser.ts.skip_newlines()
         statements: list[ASTNode] = []
