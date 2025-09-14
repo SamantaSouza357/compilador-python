@@ -13,7 +13,7 @@ import main
 
 class TestCLI(unittest.TestCase):
     def test_cli_prints_tokens_for_file(self):
-        file_path = ROOT / "tests" / "files" / "exemplo.txt"
+        file_path = ROOT / "tests" / "files" / "exemplo_valido.txt"
 
         argv_backup = sys.argv[:]
         try:
@@ -32,4 +32,3 @@ class TestCLI(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

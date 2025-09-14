@@ -16,21 +16,21 @@ class TestFilesSyntax(unittest.TestCase):
         return (ROOT / "tests" / "files" / name).read_text(encoding="utf-8")
 
     def test_valid_simple_parse(self):
-        code = self.read("valid_simple.txt")
+        code = self.read("exemplo_valido.txt")
         tokens = LexerPython(code).get_tokens()
         ast = SyntaxAnalyzer(tokens).parse()
         self.assertIsInstance(ast, Program)
         self.assertGreaterEqual(len(ast.statements), 4)
 
     def test_corner_blank_lines_indent_parse(self):
-        code = self.read("corner_blank_lines_indent.txt")
+        code = self.read("exemplo_linhas_em_branco.txt")
         tokens = LexerPython(code).get_tokens()
         ast = SyntaxAnalyzer(tokens).parse()
         self.assertIsInstance(ast, Program)
         self.assertGreaterEqual(len(ast.statements), 1)
 
     def test_invalid_syntax_missing_colon(self):
-        code = self.read("invalid_syntax_missing_colon.txt")
+        code = self.read("exemplo_erro_sintatico.txt")
         tokens = LexerPython(code).get_tokens()
         with self.assertRaises(SyntaxErrorCompilador) as ctx:
             SyntaxAnalyzer(tokens).parse()
