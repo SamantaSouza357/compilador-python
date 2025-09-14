@@ -1,8 +1,11 @@
+"""Ponto de entrada da linha de comando para executar o léxico e o parser."""
+
 import argparse
 from lexer import LexerPython
 from syntax import SyntaxAnalyzer
 
 def main():
+    """Lê os argumentos, realiza a análise léxica e sintática e imprime os resultados."""
     parser = argparse.ArgumentParser(
         description="Compilador para Python."
     )

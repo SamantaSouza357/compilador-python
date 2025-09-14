@@ -1,3 +1,5 @@
+"""Interface abstrata de manipuladores de comandos usada pelo parser."""
+
 from __future__ import annotations
 
 from typing import Optional, TYPE_CHECKING
@@ -9,10 +11,14 @@ if TYPE_CHECKING:
 
 
 class StatementHandler:
+    """Manipulador que reconhece e analisa um tipo específico de comando."""
+
     def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
+        """Retorna True se este manipulador puder analisar no token atual."""
         raise NotImplementedError
 
     def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> ASTNode:
+        """Analisa o comando e retorna seu nó de AST."""
         raise NotImplementedError
 
 

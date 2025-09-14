@@ -1,3 +1,5 @@
+"""Parser de expressões no estilo Pratt com precedência e associatividade."""
+
 from __future__ import annotations
 
 from typing import Dict, Optional, Tuple, TYPE_CHECKING
@@ -10,8 +12,16 @@ from syntax.errors import SyntaxErrorCompilador
 
 
 class ExpressionParser:
+    """Analisa expressões com precedência correta, chamadas e unário '-'.
+
+    Implementação no estilo Pratt: 'parse_expression' analisa uma expressão
+    primária e então itera enquanto houver um operador infixo forte o bastante,
+    analisando recursivamente o lado direito usando a precedência e
+    associatividade do operador.
+    """
     # precedência (maior vence) e associatividade (L = esquerda)
     PRECEDENCE: Dict[str, Tuple[int, str]] = {
+        # Números maiores ligam mais forte; associatividade "L" = esquerda-para-direita
         "*": (20, "L"),
         "/": (20, "L"),
         "//": (20, "L"),
@@ -27,7 +37,9 @@ class ExpressionParser:
     }
 
     def parse_expression(self, parser: SyntaxAnalyzer, min_prec: int = 0) -> ASTNode:
+        """Parse an expression with minimum precedence `min_prec`."""
         left = self.parse_primary(parser)
+        # Loop para reduzir uma cadeia de operadores binários conforme a precedência
         while True:
             op = self._peek_operator(parser)
             if op is None:
@@ -43,6 +55,7 @@ class ExpressionParser:
         return left
 
     def parse_primary(self, parser: SyntaxAnalyzer) -> ASTNode:
+        """Parse literals, identifiers, parenthesized expressions, and calls."""
         # Unary minus (prefix)
         if parser.ts.check(TokenType.OPERATOR) and parser.ts.current.lexema == "-":
             parser.ts.advance()
@@ -93,6 +106,7 @@ class ExpressionParser:
         raise SyntaxErrorCompilador(t.linha, f"Esperado uma expressão e foi encontrado '{t.tipo}'")
 
     def _peek_operator(self, parser: SyntaxAnalyzer) -> Optional[str]:
+        """Return the next infix operator's lexeme, if any, without consuming."""
         t = parser.ts.current
         if t is None:
             return None
@@ -105,6 +119,7 @@ class ExpressionParser:
         return None
 
     def _can_start_expression(self, parser: SyntaxAnalyzer) -> bool:
+        """Return True if the current token can start a primary expression."""
         t = parser.ts.current
         if t is None:
             return False

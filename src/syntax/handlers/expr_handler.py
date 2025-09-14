@@ -11,6 +11,8 @@ from syntax.parse_context import ParseContext
 
 
 class ExprHandler(StatementHandler):
+    """Analisa uma expressão no topo usada como comando (ex.: chamadas)."""
+
     def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         t = parser.ts.current
         if t is None:
@@ -27,6 +29,7 @@ class ExprHandler(StatementHandler):
         return False
 
     def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> ASTNode:
+        """Analisa e retorna um nó de expressão."""
         return parser.expr_parser.parse_expression(parser)
 
 __all__ = ["ExprHandler"]

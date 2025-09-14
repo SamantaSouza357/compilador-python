@@ -1,13 +1,17 @@
+"""Definições dos nós de AST usados pelo analisador sintático."""
+
 from __future__ import annotations
 
 from typing import List, Optional, Union
 
 
 class ASTNode:
+    """Classe base para todos os nós da AST."""
     pass
 
 
 class Program(ASTNode):
+    """Nó raiz contendo os comandos de alto nível."""
     def __init__(self, statements: List[ASTNode]) -> None:
         self.statements: List[ASTNode] = statements
     def __repr__(self) -> str:
@@ -15,6 +19,7 @@ class Program(ASTNode):
 
 
 class Block(ASTNode):
+    """Sequência de comandos com o mesmo nível de indentação."""
     def __init__(self, statements: List[ASTNode]) -> None:
         self.statements: List[ASTNode] = statements
     def __repr__(self) -> str:
@@ -22,6 +27,7 @@ class Block(ASTNode):
 
 
 class FunctionDeclaration(ASTNode):
+    """Declaração de função com nome, parâmetros e bloco do corpo."""
     def __init__(self, name: str, params: List[str], body: Block) -> None:
         self.name: str = name
         self.params: List[str] = params
@@ -31,6 +37,7 @@ class FunctionDeclaration(ASTNode):
 
 
 class VarAssign(ASTNode):
+    """Atribuição de variável: name = expr."""
     def __init__(self, name: str, expr: ASTNode) -> None:
         self.name: str = name
         self.expr: ASTNode = expr
@@ -39,6 +46,7 @@ class VarAssign(ASTNode):
 
 
 class IfStatement(ASTNode):
+    """Condicional if/else com blocos then/else."""
     def __init__(self, cond: ASTNode, then_block: Block, else_block: Optional[Block] = None) -> None:
         self.cond: ASTNode = cond
         self.then_block: Block = then_block
@@ -51,6 +59,7 @@ class IfStatement(ASTNode):
 
 
 class WhileStatement(ASTNode):
+    """Laço while com condição e bloco de corpo."""
     def __init__(self, cond: ASTNode, body: Block) -> None:
         self.cond: ASTNode = cond
         self.body: Block = body
@@ -59,6 +68,7 @@ class WhileStatement(ASTNode):
 
 
 class ForStatement(ASTNode):
+    """Laço for-in sobre um iterável com variável de laço e corpo."""
     def __init__(self, var_name: str, iterable: ASTNode, body: Block) -> None:
         self.var_name: str = var_name
         self.iterable: ASTNode = iterable
@@ -71,6 +81,7 @@ class ForStatement(ASTNode):
 
 
 class ReturnStatement(ASTNode):
+    """Comando return com expressão opcional."""
     def __init__(self, expr: Optional[ASTNode]) -> None:
         self.expr: Optional[ASTNode] = expr
     def __repr__(self) -> str:
@@ -78,14 +89,17 @@ class ReturnStatement(ASTNode):
 
 
 class BreakStatement(ASTNode):
+    """Interrompe o laço mais próximo."""
     pass
 
 
 class ContinueStatement(ASTNode):
+    """Continua para a próxima iteração do laço."""
     pass
 
 
 class BinaryOperation(ASTNode):
+    """Operação binária infixa: left <op> right."""
     def __init__(self, left: ASTNode, op: str, right: ASTNode) -> None:
         self.left: ASTNode = left
         self.op: str = op
@@ -95,6 +109,7 @@ class BinaryOperation(ASTNode):
 
 
 class UnaryOp(ASTNode):
+    """Operação unária prefixa, por exemplo, -x."""
     def __init__(self, op: str, operand: ASTNode) -> None:
         self.op: str = op
         self.operand: ASTNode = operand
@@ -103,6 +118,7 @@ class UnaryOp(ASTNode):
 
 
 class Literal(ASTNode):
+    """Valor literal: int, float, string ou boolean."""
     def __init__(self, value: Union[int, float, str, bool]) -> None:
         self.value: Union[int, float, str, bool] = value
     def __repr__(self) -> str:
@@ -110,6 +126,7 @@ class Literal(ASTNode):
 
 
 class Identifier(ASTNode):
+    """Referência de identificador pelo nome."""
     def __init__(self, name: str) -> None:
         self.name: str = name
     def __repr__(self) -> str:
@@ -117,6 +134,7 @@ class Identifier(ASTNode):
 
 
 class Call(ASTNode):
+    """Chamada no estilo de função: callee(args...)."""
     def __init__(self, callee: ASTNode, args: List[ASTNode]) -> None:
         self.callee: ASTNode = callee
         self.args: List[ASTNode] = args
@@ -142,4 +160,3 @@ __all__ = [
     "Identifier",
     "Call",
 ]
-

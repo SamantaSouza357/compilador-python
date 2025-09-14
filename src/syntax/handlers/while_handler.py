@@ -11,6 +11,7 @@ from syntax.parse_context import ParseContext
 
 
 class WhileHandler(StatementHandler):
+    """Analisa laços while com condição e bloco de corpo."""
     def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         return parser.ts.check(TokenType.KEYWORD, "while")
 

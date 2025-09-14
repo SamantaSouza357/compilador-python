@@ -11,6 +11,7 @@ from syntax.parse_context import ParseContext
 
 
 class AssignHandler(StatementHandler):
+    """Analisa atribuições de variável no formato name = expression."""
     def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         return parser.ts.check(TokenType.IDENTIFIER) and parser.ts.at(1).tipo == TokenType.ASSIGN and parser.ts.at(1).lexema == "="
 

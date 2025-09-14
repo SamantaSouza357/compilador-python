@@ -11,6 +11,7 @@ from syntax.parse_context import ParseContext
 
 
 class ReturnHandler(StatementHandler):
+    """Analisa comandos return com expressão opcional."""
     def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         return parser.ts.check(TokenType.KEYWORD, "return")
 

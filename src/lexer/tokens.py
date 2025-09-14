@@ -1,9 +1,12 @@
+"""Definições de tokens para o léxico (tipos, palavras-chave, símbolos e classe Token)."""
+
 from __future__ import annotations
 
 from enum import Enum
 
 
 class TokenType(Enum):
+    """Todos os tipos de token produzidos pelo léxico."""
     KEYWORD = "KEYWORD"
     IDENTIFIER = "IDENTIFIER"
     NUMBER = "NUMBER"
@@ -71,6 +74,8 @@ SIMBOLOS = {
 
 
 class Token:
+    """Um token léxico com tipo, lexema original e linha de origem."""
+
     def __init__(self, tipo: TokenType, lexema: str, linha: int) -> None:
         self.tipo: TokenType = tipo
         self.lexema: str = lexema
@@ -103,4 +108,3 @@ __all__ = [
     "KEYWORDS",
     "SIMBOLOS",
 ]
-

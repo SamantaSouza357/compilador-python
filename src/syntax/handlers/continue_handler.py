@@ -12,6 +12,7 @@ from syntax.parse_context import ParseContext
 
 
 class ContinueHandler(StatementHandler):
+    """Analisa 'continue' e valida o contexto de laço."""
     def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         return parser.ts.check(TokenType.KEYWORD, "continue")
 

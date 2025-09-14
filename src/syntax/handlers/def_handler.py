@@ -11,10 +11,12 @@ from syntax.parse_context import ParseContext
 
 
 class DefHandler(StatementHandler):
+    """Analisa declarações de função: def nome(parâmetros): NEWLINE INDENT ... DEDENT"""
     def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         return parser.ts.check(TokenType.KEYWORD, "def")
 
     def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> FunctionDeclaration:
+        """Analisa um comando def e retorna um nó FunctionDeclaration."""
         parser.ts.consume(TokenType.KEYWORD, "def", msg="Esperado 'def'")
         name = parser.ts.consume(
             TokenType.IDENTIFIER, msg="Esperado identificador do nome da função"

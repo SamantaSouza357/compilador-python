@@ -11,10 +11,12 @@ if TYPE_CHECKING:
 
 
 class IfHandler(StatementHandler):
+    """Analisa comandos if/else com blocos de corpo."""
     def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         return parser.ts.check(TokenType.KEYWORD, "if")
 
     def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> IfStatement:
+        """Analisa um if (e else opcional) e retorna seu nó."""
         # if <expr> : NEWLINE INDENT <stmts> DEDENT (else : NEWLINE INDENT <stmts> DEDENT)?
         parser.ts.consume(TokenType.KEYWORD, "if", msg="Esperado 'if'")
         cond = parser.expr_parser.parse_expression(parser)
