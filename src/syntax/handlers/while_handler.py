@@ -11,10 +11,10 @@ from syntax.parse_context import ParseContext
 
 
 class WhileHandler(StatementHandler):
-    def can_handle(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> bool:
+    def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         return parser.ts.check(TokenType.KEYWORD, "while")
 
-    def parse(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> WhileStatement:
+    def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> WhileStatement:
         parser.ts.consume(TokenType.KEYWORD, "while")
         cond = parser.expr_parser.parse_expression(parser)
         parser.ts.consume(TokenType.DELIMITER, ":", msg="Esperado ':' após condição do while")

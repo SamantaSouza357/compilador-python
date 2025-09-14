@@ -11,7 +11,7 @@ from syntax.parse_context import ParseContext
 
 
 class ExprHandler(StatementHandler):
-    def can_handle(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> bool:
+    def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         t = parser.ts.current
         if t is None:
             return False
@@ -26,7 +26,7 @@ class ExprHandler(StatementHandler):
             return True
         return False
 
-    def parse(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> ASTNode:
+    def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> ASTNode:
         return parser.expr_parser.parse_expression(parser)
 
 __all__ = ["ExprHandler"]

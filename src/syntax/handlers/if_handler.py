@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from lexer.tokens import TokenType
 from .base import StatementHandler
 from syntax.ast_nodes import IfStatement
 from syntax.parse_context import ParseContext
+if TYPE_CHECKING:
+    from syntax.syntax_analyzer import SyntaxAnalyzer
 
 
 class IfHandler(StatementHandler):
-    def can_handle(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> bool:
+    def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         return parser.ts.check(TokenType.KEYWORD, "if")
 
-    def parse(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> IfStatement:
+    def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> IfStatement:
         # if <expr> : NEWLINE INDENT <stmts> DEDENT (else : NEWLINE INDENT <stmts> DEDENT)?
         parser.ts.consume(TokenType.KEYWORD, "if", msg="Esperado 'if'")
         cond = parser.expr_parser.parse_expression(parser)

@@ -12,10 +12,10 @@ from syntax.parse_context import ParseContext
 
 
 class ContinueHandler(StatementHandler):
-    def can_handle(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> bool:
+    def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         return parser.ts.check(TokenType.KEYWORD, "continue")
 
-    def parse(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> ContinueStatement:
+    def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> ContinueStatement:
         if ctx is not None and not ctx.in_loop:
             t = parser.ts.current
             raise SyntaxErrorCompilador(t.linha, "'continue' fora de loop")

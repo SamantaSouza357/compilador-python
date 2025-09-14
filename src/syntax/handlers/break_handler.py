@@ -12,10 +12,10 @@ from syntax.parse_context import ParseContext
 
 
 class BreakHandler(StatementHandler):
-    def can_handle(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> bool:
+    def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         return parser.ts.check(TokenType.KEYWORD, "break")
 
-    def parse(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> BreakStatement:
+    def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> BreakStatement:
         if ctx is not None and not ctx.in_loop:
             t = parser.ts.current
             raise SyntaxErrorCompilador(t.linha, "'break' fora de loop")

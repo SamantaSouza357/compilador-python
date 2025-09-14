@@ -11,10 +11,10 @@ from syntax.parse_context import ParseContext
 
 
 class AssignHandler(StatementHandler):
-    def can_handle(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> bool:
+    def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         return parser.ts.check(TokenType.IDENTIFIER) and parser.ts.at(1).tipo == TokenType.ASSIGN and parser.ts.at(1).lexema == "="
 
-    def parse(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> VarAssign:
+    def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> VarAssign:
         name = parser.ts.consume(TokenType.IDENTIFIER, msg="Esperado identificador").lexema
         parser.ts.consume(TokenType.ASSIGN, "=", msg="Esperado '=' em atribuição")
         expr = parser.expr_parser.parse_expression(parser)

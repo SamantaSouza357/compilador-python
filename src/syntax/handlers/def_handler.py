@@ -11,10 +11,10 @@ from syntax.parse_context import ParseContext
 
 
 class DefHandler(StatementHandler):
-    def can_handle(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> bool:
+    def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         return parser.ts.check(TokenType.KEYWORD, "def")
 
-    def parse(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> FunctionDeclaration:
+    def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> FunctionDeclaration:
         parser.ts.consume(TokenType.KEYWORD, "def", msg="Esperado 'def'")
         name = parser.ts.consume(
             TokenType.IDENTIFIER, msg="Esperado identificador do nome da função"

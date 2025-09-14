@@ -11,10 +11,10 @@ from syntax.parse_context import ParseContext
 
 
 class ForHandler(StatementHandler):
-    def can_handle(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> bool:
+    def can_handle(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> bool:
         return parser.ts.check(TokenType.KEYWORD, "for")
 
-    def parse(self, parser: "SyntaxAnalyzer", ctx: Optional[ParseContext] = None) -> ForStatement:
+    def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> ForStatement:
         parser.ts.consume(TokenType.KEYWORD, "for")
         var_name = parser.ts.consume(
             TokenType.IDENTIFIER, msg="Esperado identificador do iterador"
