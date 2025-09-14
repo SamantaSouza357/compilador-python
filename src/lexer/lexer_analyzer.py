@@ -4,7 +4,6 @@ import re
 from typing import List
 
 from lexer.tokens import TokenType, Token, KEYWORDS, SIMBOLOS
-from syntax.syntax_analyzer import SyntaxAnalyzer
 from lexer.errors import LexicalError
 
 
@@ -138,5 +137,4 @@ class LexerPython:
 
 __all__ = [
     "LexerPython",
-    "SyntaxAnalyzer",
 ]
