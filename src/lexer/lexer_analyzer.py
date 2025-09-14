@@ -1,4 +1,4 @@
-"""Um léxico simples (estilo Python) que produz tokens e marcações de indentação.
+"""Um analisador léxico que produz tokens e marcações de indentação.
 
 Reconhece identificadores, números, strings, operadores, delimitadores, NEWLINE
 e emite INDENT/DEDENT com base no espaço em branco no início de cada linha.
