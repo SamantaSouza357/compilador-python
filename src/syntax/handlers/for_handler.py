@@ -18,15 +18,16 @@ class ForHandler(StatementHandler):
     def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> ForStatement:
         """Analisa um comando for e retorna um nó ForStatement."""
         parser.ts.consume(TokenType.KEYWORD, "for")
-        var_name = parser.ts.consume(
+        var_token = parser.ts.consume(
             TokenType.IDENTIFIER, msg="Esperado identificador do iterador"
-        ).lexema
+        )
+        var_name = var_token.lexema
         parser.ts.consume(TokenType.KEYWORD, "in", msg="Esperado palavra-chave 'in'")
         iterable = parser.expr_parser.parse_expression(parser)
         parser.ts.consume(TokenType.DELIMITER, ":", msg="Esperado ':' após expressão do for")
         parser.ts.consume(TokenType.NEWLINE, msg="Esperado nova linha após ':'")
         child_ctx = ctx.child(in_loop=True) if ctx is not None else None
         body = parser.block_parser.parse_block(parser, child_ctx, parser.parse_one)
-        return ForStatement(var_name, iterable, body)
+        return ForStatement(var_name, iterable, body, line=var_token.linha)
 
 __all__ = ["ForHandler"]

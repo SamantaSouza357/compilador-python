@@ -16,9 +16,10 @@ class AssignHandler(StatementHandler):
         return parser.ts.check(TokenType.IDENTIFIER) and parser.ts.at(1).tipo == TokenType.ASSIGN and parser.ts.at(1).lexema == "="
 
     def parse(self, parser: SyntaxAnalyzer, ctx: Optional[ParseContext] = None) -> VarAssign:
-        name = parser.ts.consume(TokenType.IDENTIFIER, msg="Esperado identificador").lexema
+        name_token = parser.ts.consume(TokenType.IDENTIFIER, msg="Esperado identificador")
+        name = name_token.lexema
         parser.ts.consume(TokenType.ASSIGN, "=", msg="Esperado '=' em atribuição")
         expr = parser.expr_parser.parse_expression(parser)
-        return VarAssign(name, expr)
+        return VarAssign(name, expr, line=name_token.linha)
 
 __all__ = ["AssignHandler"]

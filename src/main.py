@@ -1,8 +1,10 @@
-"""Ponto de entrada da linha de comando para executar o léxico e o parser."""
+"""Ponto de entrada da linha de comando para executar o léxico, parser e semântica."""
 
 import argparse
 from lexer import LexerPython
 from syntax import SyntaxAnalyzer
+from semantic import SemanticAnalyzer
+from codegen import MepaGenerator, CodeGenerationError
 
 def main():
     """Lê os argumentos, realiza a análise léxica e sintática e imprime os resultados."""
@@ -30,6 +32,14 @@ def main():
         syntax = SyntaxAnalyzer(tokens)
         ast = syntax.parse()
         print("Programa sintaticamente correto.")
+        semantic = SemanticAnalyzer(ast)
+        semantic.analyze()
+        print("Programa semanticamente correto.")
+        generator = MepaGenerator()
+        mepa_code = generator.generate(ast)
+        print("Código MEPA gerado:")
+        for instr in mepa_code:
+            print(instr)
     except Exception as e:
         print(str(e))
 

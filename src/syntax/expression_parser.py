@@ -89,7 +89,8 @@ class ExpressionParser:
 
         # identificador ou chamada
         if parser.ts.check(TokenType.IDENTIFIER):
-            ident = Identifier(parser.ts.current.lexema)
+            current = parser.ts.current
+            ident: ASTNode = Identifier(current.lexema, line=current.linha)
             parser.ts.advance()
             # chamadas encadeadas: f(x)(y)
             while parser.ts.match(TokenType.DELIMITER, "("):

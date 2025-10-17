@@ -25,6 +25,51 @@ Os comentários e docstrings estão em português; os identificadores do código
 - `src/syntax/handlers/*.py`: Handlers para cada comando
 - `tests/`: suíte de testes e arquivos de exemplo em `tests/files`
 
+## Novas etapas: semântica e MEPA
+
+Para além da análise léxica e sintática, o compilador agora valida regras semânticas e gera código intermediário na Máquina Didática MEPA.
+
+### Análise Semântica
+
+- Localização: `src/semantic/semantic_analyzer.py`
+- Objetivo: garantir consistência do programa antes da geração de código.
+  - Cada variável é declarada uma vez na seção de declarações.
+  - Variáveis usadas no corpo devem ter sido declaradas.
+  - Parâmetros de função ficam disponíveis dentro do corpo.
+  - `break`/`continue` só são válidos dentro de laços.
+- Fluxo:
+  1. `SemanticAnalyzer` recebe a AST (`Program`) e percorre comandos.
+  2. Usa a `SymbolTable` para registrar variáveis por escopo (com endereço incremental).
+  3. Diferencia fase de **declaração** (atribuições iniciais) e **corpo** (demais comandos).
+  4. Cria escopos filhos para blocos (`if`, `while`, `for`) e funções.
+  5. Aceita funções definidas e built-ins (`print`, `input`, `range`). Em caso de erro, lança `SemanticError` com a linha.
+- Estruturas principais:
+  - `SymbolTable`: lookup e controle de endereços por escopo (`src/semantic/symbol_table.py`).
+  - Métodos `_analyze_statement` e `_analyze_expression`: aplicam as regras em cada nó da AST.
+
+### Geração de Código MEPA
+
+- Localização: `src/codegen/mepa_generator.py`
+- Objetivo: converter a AST validada em instruções MEPA (máquina de pilha).
+  - Sequência típica: `INPP`, `AMEM n`, `CRVL`, `SOMA`, `DSVF`, `CHPR`, `RTPR`, `PARA`.
+- Estrutura:
+  - Classe `MepaGenerator.generate(program)` cria rótulos, endereços e gerencia escopos.
+  - Mantém mapas de variáveis para gerar comentários (`ARMZ 0 # x`) e pilhas para laços/funções.
+  - Antes do corpo principal, registra cada função (`FunctionDeclaration`), criando rótulos `F_nome_X` e `F_nome_END_Y`.
+  - Atualiza `AMEM` ao final com o total de variáveis/temporários.
+- Destaques:
+  - `while`: rótulos de entrada/fim (`L1`, `L2`), suporte a `break`/`continue` via `LoopContext`.
+  - `for` com `range(...)`: traduzido para laço com limite armazenado em temporário e label específico para o incremento.
+  - `return`: avalia a expressão, guarda em endereço reservado e salta para o label de saída.
+  - Chamadas: `input()` → `LEIT`; `print(...)` → avalia argumentos + `IMPR`; funções usuais usam `CHPR` / `RTPR`.
+  - Em caso de construções ainda não suportadas (ex.: `range` com passo), lança `CodeGenerationError`.
+
+### Fluxo completo
+1. Lexer → tokens.
+2. Parser → AST.
+3. `SemanticAnalyzer` valida escopos e variáveis.
+4. `MepaGenerator` produz lista de instruções MEPA, impressa pelo CLI (`src/main.py`), após as mensagens “Programa sintaticamente correto.” e “Programa semanticamente correto.”.
+
 ## Como rodar (exemplos com os arquivos em `tests/files`)
 
 1) Análise léxica e sintática via CLI
@@ -98,4 +143,3 @@ python3 -m unittest tests/test_lexer.py -q
 ## Licença
 
 Uso educacional. Adapte conforme necessário.
-

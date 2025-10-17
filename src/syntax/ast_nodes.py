@@ -38,9 +38,10 @@ class FunctionDeclaration(ASTNode):
 
 class VarAssign(ASTNode):
     """Atribuição de variável: name = expr."""
-    def __init__(self, name: str, expr: ASTNode) -> None:
+    def __init__(self, name: str, expr: ASTNode, line: Optional[int] = None) -> None:
         self.name: str = name
         self.expr: ASTNode = expr
+        self.line: Optional[int] = line
     def __repr__(self) -> str:
         return f"VarAssign(name={self.name!r}, expr={self.expr!r})"
 
@@ -69,10 +70,11 @@ class WhileStatement(ASTNode):
 
 class ForStatement(ASTNode):
     """Laço for-in sobre um iterável com variável de laço e corpo."""
-    def __init__(self, var_name: str, iterable: ASTNode, body: Block) -> None:
+    def __init__(self, var_name: str, iterable: ASTNode, body: Block, line: Optional[int] = None) -> None:
         self.var_name: str = var_name
         self.iterable: ASTNode = iterable
         self.body: Block = body
+        self.line: Optional[int] = line
     def __repr__(self) -> str:
         return (
             f"ForStatement(var_name={self.var_name!r}, iterable={self.iterable!r}, "
@@ -127,8 +129,9 @@ class Literal(ASTNode):
 
 class Identifier(ASTNode):
     """Referência de identificador pelo nome."""
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, line: Optional[int] = None) -> None:
         self.name: str = name
+        self.line: Optional[int] = line
     def __repr__(self) -> str:
         return f"Identifier(name={self.name!r})"
 
