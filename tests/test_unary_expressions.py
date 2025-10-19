@@ -22,6 +22,7 @@ from syntax import (
 
 
 def parse_stmt(code: str):
+    """Função auxiliar para retornar o primeiro statement da AST."""
     tokens = LexerPython(code).get_tokens()
     ast = SyntaxAnalyzer(tokens).parse()
     assert isinstance(ast, Program)
@@ -31,6 +32,7 @@ def parse_stmt(code: str):
 
 class TestUnaryExpressions(unittest.TestCase):
     def test_unary_minus_simple_number(self):
+        """x = -1 deve gerar VarAssign(UnaryOp(Literal(1)))"""
         node = parse_stmt("x=-1\n")
         self.assertIsInstance(node, VarAssign)
         self.assertEqual(node.name, "x")
@@ -40,8 +42,8 @@ class TestUnaryExpressions(unittest.TestCase):
         self.assertEqual(node.expr.operand.value, 1)
 
     def test_unary_minus_binding_power_over_multiply(self):
+        """Verifica se -a * b é interpretado como (-a) * b"""
         node = parse_stmt("-a * b\n")
-        # (-a) * b
         self.assertIsInstance(node, BinaryOperation)
         self.assertEqual(node.op, "*")
         self.assertIsInstance(node.left, UnaryOp)
@@ -50,9 +52,13 @@ class TestUnaryExpressions(unittest.TestCase):
         self.assertEqual(node.left.operand.name, "a")
 
     def test_double_unary_minus(self):
+        """--x deve criar dois UnaryOp aninhados."""
         node = parse_stmt("--x\n")
+
+        # Pode ser UnaryOp(UnaryOp(Identifier('x'))) ou simplificado
         self.assertIsInstance(node, UnaryOp)
         self.assertEqual(node.op, "-")
+
         inner = node.operand
         self.assertIsInstance(inner, UnaryOp)
         self.assertEqual(inner.op, "-")
@@ -60,6 +66,7 @@ class TestUnaryExpressions(unittest.TestCase):
         self.assertEqual(inner.operand.name, "x")
 
     def test_binary_minus_and_unary_minus_mix(self):
+        """a - -b deve criar BinaryOperation('-', Identifier(a), UnaryOp('-', Identifier(b)))"""
         node = parse_stmt("a - -b\n")
         self.assertIsInstance(node, BinaryOperation)
         self.assertEqual(node.op, "-")
@@ -71,25 +78,42 @@ class TestUnaryExpressions(unittest.TestCase):
         self.assertEqual(node.right.operand.name, "b")
 
     def test_unary_inside_call_arguments(self):
+        """f(-x, y) deve permitir UnaryOp dentro dos argumentos."""
         node = parse_stmt("f(-x, y)\n")
         self.assertIsInstance(node, Call)
         self.assertEqual(len(node.args), 2)
-        self.assertIsInstance(node.args[0], UnaryOp)
-        self.assertEqual(node.args[0].op, "-")
-        self.assertIsInstance(node.args[0].operand, Identifier)
-        self.assertEqual(node.args[0].operand.name, "x")
+
+        arg1 = node.args[0]
+        self.assertIsInstance(arg1, UnaryOp)
+        self.assertEqual(arg1.op, "-")
+        self.assertIsInstance(arg1.operand, Identifier)
+        self.assertEqual(arg1.operand.name, "x")
+
+        arg2 = node.args[1]
+        self.assertIsInstance(arg2, Identifier)
+        self.assertEqual(arg2.name, "y")
 
     def test_unary_in_parentheses(self):
+        """(-1 + 2) * 3 deve respeitar precedência dos parênteses."""
         node = parse_stmt("(-1 + 2) * 3\n")
         self.assertIsInstance(node, BinaryOperation)
         self.assertEqual(node.op, "*")
-        self.assertIsInstance(node.left, BinaryOperation)
-        self.assertEqual(node.left.op, "+")
-        self.assertIsInstance(node.left.left, UnaryOp)
-        self.assertIsInstance(node.left.left.operand, Literal)
-        self.assertEqual(node.left.left.operand.value, 1)
-        self.assertIsInstance(node.left.right, Literal)
-        self.assertEqual(node.left.right.value, 2)
+
+        left = node.left
+        self.assertIsInstance(left, BinaryOperation)
+        self.assertEqual(left.op, "+")
+
+        # (-1) deve ser UnaryOp(Literal(1))
+        self.assertIsInstance(left.left, UnaryOp)
+        self.assertEqual(left.left.op, "-")
+        self.assertIsInstance(left.left.operand, Literal)
+        self.assertEqual(left.left.operand.value, 1)
+
+        self.assertIsInstance(left.right, Literal)
+        self.assertEqual(left.right.value, 2)
+
+        self.assertIsInstance(node.right, Literal)
+        self.assertEqual(node.right.value, 3)
 
 
 if __name__ == "__main__":

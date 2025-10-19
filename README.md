@@ -32,17 +32,18 @@ Para além da análise léxica e sintática, o compilador agora valida regras se
 ### Análise Semântica
 
 - Localização: `src/semantic/semantic_analyzer.py`
-- Objetivo: garantir consistência do programa antes da geração de código.
-  - Cada variável é declarada uma vez na seção de declarações.
-  - Variáveis usadas no corpo devem ter sido declaradas.
-  - Parâmetros de função ficam disponíveis dentro do corpo.
-  - `break`/`continue` só são válidos dentro de laços.
+- Objetivo: garantir a consistência básica do programa antes da execução ou geração de código.
+  - Cada variável deve ser declarada antes de ser usada.
+  - Variáveis não podem ser redeclaradas no mesmo escopo.
+  - Comandos `break`/`continue` só são válidos dentro de laços (while / for).
+  - Expressões devem conter apenas identificadores válidos e tipos compatíveis (números, strings, booleanos, etc.).
 - Fluxo:
   1. `SemanticAnalyzer` recebe a AST (`Program`) e percorre comandos.
-  2. Usa a `SymbolTable` para registrar variáveis por escopo (com endereço incremental).
+  2. Usa a `SymbolTable` para registrar variáveis por escopo e verificar se já foram declaradas (com endereço incremental).
   3. Diferencia fase de **declaração** (atribuições iniciais) e **corpo** (demais comandos).
-  4. Cria escopos filhos para blocos (`if`, `while`, `for`) e funções.
+  4. Cria escopos filhos para blocos (`if`, `while`, `for`), herdando variáveis do escopo pai.
   5. Aceita funções definidas e built-ins (`print`, `input`, `range`). Em caso de erro, lança `SemanticError` com a linha.
+  6. Em caso de uso indevido (break fora de laço, variável não declarada, operação inválida), lança SemanticError indicando a linha e a causa.
 - Estruturas principais:
   - `SymbolTable`: lookup e controle de endereços por escopo (`src/semantic/symbol_table.py`).
   - Métodos `_analyze_statement` e `_analyze_expression`: aplicam as regras em cada nó da AST.
@@ -54,7 +55,7 @@ Para além da análise léxica e sintática, o compilador agora valida regras se
   - Sequência típica: `INPP`, `AMEM n`, `CRVL`, `SOMA`, `DSVF`, `CHPR`, `RTPR`, `PARA`.
 - Estrutura:
   - Classe `MepaGenerator.generate(program)` cria rótulos, endereços e gerencia escopos.
-  - Mantém mapas de variáveis para gerar comentários (`ARMZ 0 # x`) e pilhas para laços/funções.
+  - Mantém mapas de variáveis para gerar comentários (`ARMZ 0 # x`) e pilhas para laços.
   - Antes do corpo principal, registra cada função (`FunctionDeclaration`), criando rótulos `F_nome_X` e `F_nome_END_Y`.
   - Atualiza `AMEM` ao final com o total de variáveis/temporários.
 - Destaques:
@@ -111,7 +112,7 @@ python3 src/main.py -f tests/files/exemplo_erro_sintatico.txt
 Saída (exemplo):
 
 ```
-Erro de sintaxe na linha 2: Esperado ':' …
+Erro de sintaxe na linha 1: Esperado ':' …
 ```
 
 ## Rodando a suíte de testes

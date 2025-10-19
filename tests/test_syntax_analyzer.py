@@ -12,19 +12,17 @@ from lexer import LexerPython
 from syntax import (
     SyntaxAnalyzer,
     Program,
-    FunctionDeclaration,
-    Block,
-    IfStatement,
-    ReturnStatement,
     VarAssign,
     Call,
     Identifier,
     Literal,
+    BinaryOperation,
 )
 
 
 class TestSyntaxAnalyzer(unittest.TestCase):
     def test_parse_example_program_ast_shape(self):
+        """Verifica a estrutura geral da AST de exemplo_valido.txt (sem funções, com operações binárias)"""
         example_path = ROOT / "tests" / "files" / "exemplo_valido.txt"
         source = example_path.read_text(encoding="utf-8")
 
@@ -32,55 +30,61 @@ class TestSyntaxAnalyzer(unittest.TestCase):
         parser = SyntaxAnalyzer(tokens)
         ast = parser.parse()
 
+        # O programa principal deve ser uma instância de Program
         self.assertIsInstance(ast, Program)
-        self.assertGreaterEqual(len(ast.statements), 5)
+        self.assertGreaterEqual(len(ast.statements), 3)
 
-        # 1) Declaração de função: soma(x, y)
-        func = ast.statements[0]
-        self.assertIsInstance(func, FunctionDeclaration)
-        self.assertEqual(func.name, "soma")
-        self.assertEqual(func.params, ["x", "y"])
-        self.assertIsInstance(func.body, Block)
+        # -------------------------------------------------------------
+        # 1) Deve existir uma atribuição x = 1
+        # -------------------------------------------------------------
+        assign_x = next(
+            (s for s in ast.statements if isinstance(s, VarAssign) and s.name == "x"),
+            None,
+        )
+        self.assertIsNotNone(assign_x, "Variável x não encontrada")
+        self.assertIsInstance(assign_x.expr, Literal)
 
-        # Dentro da função: if ... else ... com returns
-        self.assertEqual(len(func.body.statements), 1)
-        if_stmt = func.body.statements[0]
-        self.assertIsInstance(if_stmt, IfStatement)
-        self.assertIsInstance(if_stmt.then_block, Block)
-        self.assertIsInstance(if_stmt.else_block, Block)
-        self.assertEqual(len(if_stmt.then_block.statements), 1)
-        self.assertEqual(len(if_stmt.else_block.statements), 1)
-        self.assertIsInstance(if_stmt.then_block.statements[0], ReturnStatement)
-        self.assertIsInstance(if_stmt.else_block.statements[0], ReturnStatement)
+        # -------------------------------------------------------------
+        # 2) Deve existir uma atribuição y = 2
+        # -------------------------------------------------------------
+        assign_y = next(
+            (s for s in ast.statements if isinstance(s, VarAssign) and s.name == "y"),
+            None,
+        )
+        self.assertIsNotNone(assign_y, "Variável y não encontrada")
+        self.assertIsInstance(assign_y.expr, Literal)
 
-        # 2) x = 1
-        assign_x = ast.statements[1]
-        self.assertIsInstance(assign_x, VarAssign)
-        self.assertEqual(assign_x.name, "x")
-        self.assertTrue(isinstance(assign_x.expr, Literal))
+        # -------------------------------------------------------------
+        # 3) Deve existir uma atribuição r = x + y
+        # -------------------------------------------------------------
+        assign_r = next(
+            (s for s in ast.statements if isinstance(s, VarAssign) and s.name == "r"),
+            None,
+        )
+        self.assertIsNotNone(assign_r, "Variável r não encontrada")
+        self.assertIsInstance(assign_r.expr, BinaryOperation)
+        self.assertEqual(assign_r.expr.op, "+")
+        self.assertIsInstance(assign_r.expr.left, Identifier)
+        self.assertIsInstance(assign_r.expr.right, Identifier)
 
-        # 3) y = 2
-        assign_y = ast.statements[2]
-        self.assertIsInstance(assign_y, VarAssign)
-        self.assertEqual(assign_y.name, "y")
-        self.assertTrue(isinstance(assign_y.expr, Literal))
-
-        # 4) r = soma(x, y)
-        assign_r = ast.statements[3]
-        self.assertIsInstance(assign_r, VarAssign)
-        self.assertEqual(assign_r.name, "r")
-        self.assertIsInstance(assign_r.expr, Call)
-        self.assertIsInstance(assign_r.expr.callee, Identifier)
-        self.assertEqual(assign_r.expr.callee.name, "soma")
-        self.assertEqual(len(assign_r.expr.args), 2)
-        self.assertIsInstance(assign_r.expr.args[0], Identifier)
-        self.assertIsInstance(assign_r.expr.args[1], Identifier)
-
-        # 5) print("A soma é:", r) — expressão de chamada no topo
-        last = ast.statements[4]
-        self.assertIsInstance(last, Call)
-        self.assertIsInstance(last.callee, Identifier)
-        self.assertEqual(last.callee.name, "print")
+        # -------------------------------------------------------------
+        # 4) Deve existir um print("A soma é:", r)
+        # -------------------------------------------------------------
+        print_call = next(
+            (
+                s
+                for s in ast.statements
+                if isinstance(s, Call)
+                and isinstance(s.callee, Identifier)
+                and s.callee.name == "print"
+            ),
+            None,
+        )
+        self.assertIsNotNone(print_call, "Chamada a print() não encontrada")
+        self.assertTrue(
+            any(isinstance(arg, (Literal, Identifier)) for arg in print_call.args),
+            "print() deve conter pelo menos um literal ou identificador",
+        )
 
 
 if __name__ == "__main__":

@@ -16,20 +16,18 @@ from lexer.errors import LexicalError
 class LexerPython:
     """Converte o código-fonte em uma lista plana de tokens, incluindo INDENT/DEDENT."""
     TOKEN_REGEX = [
-        # A ordem importa: padrões mais específicos/com vários caracteres primeiro
-        (r"[ \t]+", None),              # ignora espaços/tabs (não no início da linha)
-        (r"#.*", None),                 # comentários
-        (r"\"[^\"]*\"|\'[^\']*\'", TokenType.STRING),  # strings
-        (r"[0-9]+(\.[0-9]+)?", TokenType.NUMBER),      # números
+        # A ordem importa: padrões mais específicos primeiro
+        (r"[ \t]+", None),                              # ignora espaços/tabs (não no início da linha)
+        (r"#.*", None),                                 # ignora comentários de linha
+        (r'("""(?:.|\n)*?"""|\'\'\'(?:.|\n)*?\'\'\')', None),  # ignora strings de aspas triplas (docstrings / comentários de bloco)
+        (r"\"[^\"]*\"|\'[^\']*\'", TokenType.STRING),   # strings normais
+        (r"[0-9]+(\.[0-9]+)?", TokenType.NUMBER),       # números
         (r"[A-Za-z_][A-Za-z0-9_]*", TokenType.IDENTIFIER), # identificadores e palavras-chave
-        # operadores com mais de um caractere primeiro
-        (r"(//|==|!=|>=|<=)", TokenType.OPERATOR),
-        # operadores de um caractere
-        (r"[+\-*/%<>]", TokenType.OPERATOR),
-        # atribuição '='
-        (r"=", TokenType.ASSIGN),
-        (r"[\(\)\[\]\{\},.:]", TokenType.DELIMITER),   # delimitadores
-        (r"\r?\n", TokenType.NEWLINE),                    # quebra de linha (suporta CRLF)
+        (r"(//|==|!=|>=|<=)", TokenType.OPERATOR),      # operadores de 2 caracteres
+        (r"[+\-*/%<>]", TokenType.OPERATOR),            # operadores de 1 caractere
+        (r"=", TokenType.ASSIGN),                       # atribuição
+        (r"[\(\)\[\]\{\},.:]", TokenType.DELIMITER),    # delimitadores
+        (r"\r?\n", TokenType.NEWLINE),                  # quebra de linha
     ]
 
     def __init__(self, source: str) -> None:

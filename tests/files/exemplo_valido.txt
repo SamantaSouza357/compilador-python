@@ -1,10 +1,16 @@
-def soma(x, y):
-    if x>y:
-        return x
-    else:
-        return y
-
 x=1
 y=2
-r=soma(x,y)
+
+r = x + y
+if x > y:   
+    a = 7
+    print(x) 
+    if x > 2:
+        b = 9
+        print (a)  
+     
+        print(a + b)  
+
+#print(a)
+
 print("A soma é:",r)

@@ -1,28 +1,14 @@
 """Gerador de código intermediário no formato MEPA."""
 
 from __future__ import annotations
-
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional
-
 from semantic.errors import SemanticError
 from syntax.ast_nodes import (
-    ASTNode,
-    Program,
-    FunctionDeclaration,
-    VarAssign,
-    IfStatement,
-    WhileStatement,
-    ForStatement,
-    ReturnStatement,
-    BreakStatement,
-    ContinueStatement,
-    BinaryOperation,
-    UnaryOp,
-    Literal,
-    Identifier,
-    Call,
+    ASTNode, Program, FunctionDeclaration, VarAssign, IfStatement, WhileStatement,
+    ForStatement, ReturnStatement, BreakStatement, ContinueStatement,
+    BinaryOperation, UnaryOp, Literal, Identifier, Call,
 )
 
 
@@ -30,26 +16,55 @@ class CodeGenerationError(Exception):
     """Erro genérico de geração de código."""
 
 
+# ================================================================
+# Estruturas auxiliares
+# ================================================================
 @dataclass
 class _Scope:
-    """Representa um escopo de variáveis com encadeamento."""
-
+    """Escopo de variáveis com endereços relativos e suporte a deslocamento absoluto."""
     parent: Optional["_Scope"]
     symbols: Dict[str, int]
+    next_addr: int = 0
+
+    def declare(self, name: str) -> int:
+        """Declara uma variável neste escopo."""
+        if name in self.symbols:
+            raise SemanticError(None, f"variável '{name}' já declarada neste escopo.")
+        addr = self.next_addr
+        self.symbols[name] = addr
+        self.next_addr += 1
+        return addr
+
+    def abs_offset_from_root(self) -> int:
+        """Soma quantos slots existem acima deste escopo."""
+        offset = 0
+        scope = self.parent
+        while scope is not None:
+            offset += scope.next_addr
+            scope = scope.parent
+        return offset
+
+    def lookup_abs(self, name: str) -> Optional[int]:
+        """Procura variável e retorna endereço absoluto (soma deslocamentos dos escopos pais)."""
+        scope = self
+        offset_below = 0
+        while scope is not None:
+            if name in scope.symbols:
+                rel = scope.symbols[name]
+                return scope.abs_offset_from_root() + rel + offset_below
+            offset_below += scope.next_addr
+            scope = scope.parent
+        return None
 
 
 @dataclass
 class LoopContext:
-    """Mantém os rótulos de controle para break/continue."""
-
     break_label: str
     continue_label: str
 
 
 @dataclass
 class FunctionInfo:
-    """Metadados de função necessários para geração de chamadas."""
-
     name: str
     label: str
     end_label: str
@@ -60,11 +75,12 @@ class FunctionInfo:
 
 @dataclass
 class FunctionContext:
-    """Contexto ativo durante a geração do corpo de uma função."""
-
     info: FunctionInfo
 
 
+# ================================================================
+# Gerador de Código MEPA
+# ================================================================
 class MepaGenerator:
     """Converte a AST em uma sequência de instruções MEPA."""
 
@@ -72,8 +88,6 @@ class MepaGenerator:
         self.instructions: List[str] = []
         self._current_output: List[str] = self.instructions
         self._label_counter: int = 0
-        self._next_address: int = 0
-        self._temp_counter: int = 0
         self._current_scope: _Scope = _Scope(parent=None, symbols={})
         self._loop_stack: List[LoopContext] = []
         self._function_stack: List[FunctionContext] = []
@@ -81,15 +95,15 @@ class MepaGenerator:
         self._function_segments: List[List[str]] = []
         self._address_names: Dict[int, str] = {}
         self._program_end_label: Optional[str] = None
+        self._locals_count_stack: List[int] = []
+        self._max_abs_addr: int = -1  # controla maior endereço usado
 
-    # API pública ---------------------------------------------------------
+    # ----------------------------------------------------------
     def generate(self, program: Program) -> List[str]:
-        """Gera instruções MEPA para um Program."""
+        """Gera as instruções MEPA para o programa completo."""
         self.instructions = ["INPP", "AMEM 0"]
         self._current_output = self.instructions
         self._label_counter = 0
-        self._next_address = 0
-        self._temp_counter = 0
         self._current_scope = _Scope(parent=None, symbols={})
         self._loop_stack = []
         self._function_stack = []
@@ -97,6 +111,8 @@ class MepaGenerator:
         self._function_segments = []
         self._address_names = {}
         self._program_end_label = None
+        self._locals_count_stack = []
+        self._max_abs_addr = -1
 
         try:
             self._generate_program(program)
@@ -106,96 +122,43 @@ class MepaGenerator:
             raise CodeGenerationError(str(exc)) from exc
 
         if self._program_end_label is None:
-            self._program_end_label = self._new_label()
+            self._program_end_label = self._new_label("LEND_")
+
         self._emit(f"DSVS {self._program_end_label}")
 
         for segment in self._function_segments:
             self.instructions.extend(segment)
 
-        self.instructions.append(f"{self._program_end_label}: NADA")
-        self.instructions.append("PARA")
+        self._emit(f"{self._program_end_label}: NADA")
+        self._emit("PARA")
 
-        self.instructions[1] = f"AMEM {self._next_address}"
+        # Corrige AMEM inicial
+        total_mem = max(0, self._max_abs_addr + 1)
+        self.instructions[1] = f"AMEM {total_mem}"
+
         return self.instructions
 
-    # Geração por nó ------------------------------------------------------
+    # ----------------------------------------------------------
     def _generate_program(self, program: Program) -> None:
-        """Processa declarações globais e o corpo do programa."""
+        """Processa funções e corpo principal."""
         for stmt in program.statements:
             if isinstance(stmt, FunctionDeclaration):
                 self._generate_function(stmt)
 
-        body_started = False
         for stmt in program.statements:
-            if isinstance(stmt, FunctionDeclaration):
-                continue
-            if isinstance(stmt, VarAssign) and not body_started:
-                addr = self._declare_variable(stmt.name)
-                self._generate_expression(stmt.expr)
-                self._store(addr)
-            else:
-                body_started = True
+            if not isinstance(stmt, FunctionDeclaration):
                 self._generate_statement(stmt)
 
         if self._program_end_label is None:
-            self._program_end_label = self._new_label(prefix="LEND_")
+            self._program_end_label = self._new_label("LEND_")
 
-    def _generate_function(self, func: FunctionDeclaration) -> None:
-        label = self._new_label(prefix=f"F_{func.name}_")
-        end_label = self._new_label(prefix=f"F_{func.name}_END_")
-        info = FunctionInfo(name=func.name, label=label, end_label=end_label, return_addr=-1)
-        self._function_infos[func.name] = info
-        instructions: List[str] = []
-        info.instructions = instructions
-        self._function_segments.append(instructions)
-
-        with self._using_output(instructions):
-            self._emit(f"{label}: NADA")
-            self._enter_scope()
-            for param in func.params:
-                addr = self._declare_variable(param)
-                info.param_addresses.append(addr)
-            info.return_addr = self._allocate_temp(f"{func.name}_ret")
-            self._emit("CRCT 0")
-            self._store(info.return_addr)
-            self._function_stack.append(FunctionContext(info=info))
-            self._generate_statements_in_current_scope(func.body.statements, allow_declarations=True)
-            self._function_stack.pop()
-            self._emit(f"{end_label}: RTPR")
-            self._exit_scope()
-
-    def _generate_block(
-        self,
-        statements: Iterable[ASTNode],
-        *,
-        allow_declarations: bool,
-    ) -> None:
-        """Analisa um bloco delimitado por escopo próprio."""
-        self._enter_scope()
-        self._generate_statements_in_current_scope(statements, allow_declarations=allow_declarations)
-        self._exit_scope()
-
-    def _generate_statements_in_current_scope(
-        self,
-        statements: Iterable[ASTNode],
-        *,
-        allow_declarations: bool,
-    ) -> None:
-        body_started = not allow_declarations
-        for stmt in statements:
-            if isinstance(stmt, VarAssign) and not body_started:
-                addr = self._declare_variable(stmt.name)
-                self._generate_expression(stmt.expr)
-                self._store(addr)
-            else:
-                body_started = True
-                self._generate_statement(stmt)
-
+    # ----------------------------------------------------------
     def _generate_statement(self, stmt: ASTNode) -> None:
+        """Gera código MEPA para uma instrução."""
         if isinstance(stmt, VarAssign):
             addr = self._lookup(stmt.name)
             if addr is None:
-                raise SemanticError(stmt.line or 0, f"variável '{stmt.name}' não declarada")
+                addr = self._declare_variable(stmt.name)
             self._generate_expression(stmt.expr)
             self._store(addr)
             return
@@ -205,11 +168,11 @@ class MepaGenerator:
             label_else = self._new_label()
             label_end = self._new_label()
             self._emit(f"DSVF {label_else}")
-            self._generate_block(stmt.then_block.statements, allow_declarations=False)
+            self._generate_block(stmt.then_block.statements)
             self._emit(f"DSVS {label_end}")
             self._emit(f"{label_else}: NADA")
-            if stmt.else_block is not None:
-                self._generate_block(stmt.else_block.statements, allow_declarations=False)
+            if stmt.else_block:
+                self._generate_block(stmt.else_block.statements)
             self._emit(f"{label_end}: NADA")
             return
 
@@ -221,31 +184,27 @@ class MepaGenerator:
             self._emit(f"DSVF {label_end}")
             loop_ctx = LoopContext(break_label=label_end, continue_label=label_start)
             self._loop_stack.append(loop_ctx)
-            self._generate_block(stmt.body.statements, allow_declarations=False)
+            self._generate_block(stmt.body.statements)
             self._loop_stack.pop()
             self._emit(f"DSVS {label_start}")
             self._emit(f"{label_end}: NADA")
             return
 
-        if isinstance(stmt, ForStatement):
-            self._generate_for(stmt)
-            return
-
         if isinstance(stmt, BreakStatement):
             if not self._loop_stack:
-                raise CodeGenerationError("break fora de laço não é suportado")
+                raise CodeGenerationError("Comando 'break' fora de laço.")
             self._emit(f"DSVS {self._loop_stack[-1].break_label}")
             return
 
         if isinstance(stmt, ContinueStatement):
             if not self._loop_stack:
-                raise CodeGenerationError("continue fora de laço não é suportado")
+                raise CodeGenerationError("Comando 'continue' fora de laço.")
             self._emit(f"DSVS {self._loop_stack[-1].continue_label}")
             return
 
         if isinstance(stmt, ReturnStatement):
             if not self._function_stack:
-                raise CodeGenerationError("return fora de função não é permitido")
+                raise CodeGenerationError("Comando 'return' fora de função.")
             ctx = self._function_stack[-1]
             if stmt.expr is not None:
                 self._generate_expression(stmt.expr)
@@ -255,71 +214,37 @@ class MepaGenerator:
 
         self._generate_expression_statement(stmt)
 
-    def _generate_for(self, stmt: ForStatement) -> None:
-        iterable = stmt.iterable
-        if not (
-            isinstance(iterable, Call)
-            and isinstance(iterable.callee, Identifier)
-            and iterable.callee.name == "range"
-        ):
-            raise NotImplementedError("Somente for com range(...) é suportado na geração de código")
-
-        args = iterable.args
-        if len(args) == 1:
-            start_expr = Literal(0)
-            end_expr = args[0]
-        elif len(args) == 2:
-            start_expr, end_expr = args
-        else:
-            raise NotImplementedError("range() com step ainda não é suportado na geração de código")
-
+    # ----------------------------------------------------------
+    def _generate_block(self, statements: Iterable[ASTNode]) -> None:
+        """Cria um novo escopo para um bloco."""
         self._enter_scope()
-        loop_var_addr = self._declare_variable(stmt.var_name)
-        limit_addr = self._allocate_temp(f"{stmt.var_name}_limite")
-
-        self._generate_expression(start_expr)
-        self._store(loop_var_addr)
-        self._generate_expression(end_expr)
-        self._store(limit_addr)
-
-        label_start = self._new_label()
-        label_end = self._new_label()
-        label_increment = self._new_label()
-
-        self._emit(f"{label_start}: NADA")
-        self._load(loop_var_addr)
-        self._load(limit_addr)
-        self._emit("CMME")
-        self._emit(f"DSVF {label_end}")
-
-        loop_ctx = LoopContext(break_label=label_end, continue_label=label_increment)
-        self._loop_stack.append(loop_ctx)
-        self._generate_statements_in_current_scope(stmt.body.statements, allow_declarations=False)
-        self._loop_stack.pop()
-
-        self._emit(f"{label_increment}: NADA")
-        self._load(loop_var_addr)
-        self._emit("CRCT 1")
-        self._emit("SOMA")
-        self._store(loop_var_addr)
-        self._emit(f"DSVS {label_start}")
-        self._emit(f"{label_end}: NADA")
-
+        for stmt in statements:
+            self._generate_statement(stmt)
         self._exit_scope()
 
-    def _generate_expression_statement(self, expr: ASTNode) -> None:
-        if isinstance(expr, Call):
-            if isinstance(expr.callee, Identifier) and expr.callee.name == "print":
-                for arg in expr.args:
-                    self._generate_expression(arg)
-                    self._emit("IMPR")
-                return
-        raise NotImplementedError("Expressão usada como comando não suportada (exceto print())")
+    # ----------------------------------------------------------
+    def _declare_variable(self, name: str) -> int:
+        """Declara variável no escopo atual e retorna endereço absoluto."""
+        _ = self._current_scope.declare(name)
+        full_addr = self._lookup(name)
+        self._address_names[full_addr] = name
 
-    # Expressões ----------------------------------------------------------
+        if self._locals_count_stack:
+            self._locals_count_stack[-1] += 1
+        return full_addr
+
+    # ----------------------------------------------------------
     def _generate_expression(self, expr: ASTNode) -> None:
         if isinstance(expr, Literal):
-            self._emit(self._literal_instruction(expr.value))
+            if isinstance(expr.value, bool):
+                self._emit(f"CRCT {1 if expr.value else 0}")
+            elif isinstance(expr.value, (int, float)):
+                self._emit(f"CRCT {expr.value}")
+            elif isinstance(expr.value, str):
+                s = expr.value.replace('"', r'\"')
+                self._emit(f'CRCS "{s}"')
+            else:
+                raise NotImplementedError(f"Literal {type(expr.value)} não suportado")
             return
 
         if isinstance(expr, Identifier):
@@ -329,128 +254,88 @@ class MepaGenerator:
             self._load(addr)
             return
 
+        if isinstance(expr, BinaryOperation):
+            self._generate_expression(expr.left)
+            self._generate_expression(expr.right)
+            self._emit(self._binary_instruction(expr.op))
+            return
+
         if isinstance(expr, UnaryOp):
-            if expr.op != "-":
-                raise NotImplementedError(f"Operador unário '{expr.op}' não suportado")
             self._generate_expression(expr.operand)
             self._emit("NEGA")
             return
 
-        if isinstance(expr, BinaryOperation):
-            self._generate_expression(expr.left)
-            self._generate_expression(expr.right)
-            op = self._binary_instruction(expr.op)
-            self._emit(op)
-            return
-
         if isinstance(expr, Call):
-            if isinstance(expr.callee, Identifier):
-                name = expr.callee.name
-                if name == "input":
-                    if expr.args:
-                        raise NotImplementedError("input() não aceita argumentos")
-                    self._emit("LEIT")
-                    return
-                if name in self._function_infos:
-                    info = self._function_infos[name]
-                    if len(expr.args) != len(info.param_addresses):
-                        raise CodeGenerationError(
-                            f"Quantidade de argumentos inválida ao chamar '{name}'"
-                        )
-                    for arg, addr in zip(expr.args, info.param_addresses):
-                        self._generate_expression(arg)
-                        self._store(addr)
-                    self._emit(f"CHPR {info.label}")
-                    self._load(info.return_addr)
-                    return
-            raise NotImplementedError("Chamadas de função não suportadas para este callee")
+            if isinstance(expr.callee, Identifier) and expr.callee.name == "print":
+                for arg in expr.args:
+                    self._generate_expression(arg)
+                    self._emit("IMPR")
+                return
+            raise NotImplementedError("Somente print() é suportado.")
+        raise NotImplementedError(f"Nó de expressão {type(expr).__name__} não suportado.")
 
-        if isinstance(expr, VarAssign):
-            self._generate_statement(expr)
+    # ----------------------------------------------------------
+    def _generate_expression_statement(self, expr: ASTNode) -> None:
+        if isinstance(expr, Call) and isinstance(expr.callee, Identifier) and expr.callee.name == "print":
+            for arg in expr.args:
+                self._generate_expression(arg)
+                self._emit("IMPR")
             return
+        raise NotImplementedError("Expressão usada como comando não suportada.")
 
-        raise NotImplementedError(f"Nó de expressão '{expr.__class__.__name__}' não suportado")
-
-    # Auxiliares -----------------------------------------------------------
-    def _declare_variable(self, name: str) -> int:
-        if name in self._current_scope.symbols:
-            raise SemanticError(None, f"variável '{name}' já declarada neste escopo")
-        addr = self._next_address
-        self._current_scope.symbols[name] = addr
-        self._address_names[addr] = name
-        self._next_address += 1
-        return addr
-
-    def _allocate_temp(self, hint: str) -> int:
-        addr = self._next_address
-        self._next_address += 1
-        label = hint or f"temp_{self._temp_counter}"
-        self._temp_counter += 1
-        self._address_names[addr] = label
-        return addr
-
+    # ----------------------------------------------------------
     def _lookup(self, name: str) -> Optional[int]:
-        scope = self._current_scope
-        while scope is not None:
-            if name in scope.symbols:
-                return scope.symbols[name]
-            scope = scope.parent
-        return None
+        return self._current_scope.lookup_abs(name)
 
+    # ----------------------------------------------------------
     def _enter_scope(self) -> None:
         self._current_scope = _Scope(parent=self._current_scope, symbols={})
+        self._locals_count_stack.append(0)
+        self._emit("AMEM 0")
 
     def _exit_scope(self) -> None:
         if self._current_scope.parent is None:
-            raise CodeGenerationError("Tentativa de sair do escopo global")
+            raise CodeGenerationError("Tentativa de sair do escopo global.")
+        local_count = self._locals_count_stack.pop()
+        if local_count > 0:
+            self._emit(f"DMEM {local_count}")
+        for i in range(len(self._current_output) - 1, -1, -1):
+            if self._current_output[i].startswith("AMEM 0"):
+                self._current_output[i] = f"AMEM {local_count}"
+                break
         self._current_scope = self._current_scope.parent
+
+    # ----------------------------------------------------------
+    @staticmethod
+    def _binary_instruction(op: str) -> str:
+        mapping = {
+            "+": "SOMA", "-": "SUBT", "*": "MULT", "/": "DIVI", "//": "DIVI",
+            "==": "CMIG", "!=": "CMDG", ">": "CMMA", "<": "CMME",
+            ">=": "CMAG", "<=": "CMEG",
+        }
+        if op not in mapping:
+            raise NotImplementedError(f"Operador {op} não suportado.")
+        return mapping[op]
+
+    # ----------------------------------------------------------
+    def _emit(self, instruction: str) -> None:
+        self._current_output.append(instruction)
 
     def _new_label(self, prefix: str = "L") -> str:
         self._label_counter += 1
         return f"{prefix}{self._label_counter}"
 
-    def _emit(self, instruction: str) -> None:
-        self._current_output.append(instruction)
-
     def _load(self, addr: int) -> None:
+        self._max_abs_addr = max(self._max_abs_addr, addr)
         comment = self._address_names.get(addr)
         suffix = f" # {comment}" if comment else ""
         self._emit(f"CRVL {addr}{suffix}")
 
     def _store(self, addr: int) -> None:
+        self._max_abs_addr = max(self._max_abs_addr, addr)
         comment = self._address_names.get(addr)
         suffix = f" # {comment}" if comment else ""
         self._emit(f"ARMZ {addr}{suffix}")
-
-    def _literal_instruction(self, value: object) -> str:
-        if isinstance(value, bool):
-            return f"CRCT {1 if value else 0}"
-        if isinstance(value, (int, float)):
-            return f"CRCT {value}"
-        if isinstance(value, str):
-            escaped = value.replace('"', '\\"')
-            return f'CRCS "{escaped}"'
-        raise NotImplementedError(f"Literal do tipo '{type(value).__name__}' não suportado")
-
-    @staticmethod
-    def _binary_instruction(op: str) -> str:
-        mapping = {
-            "+": "SOMA",
-            "-": "SUBT",
-            "*": "MULT",
-            "/": "DIVI",
-            "//": "DIVI",
-            "%": "MOD",
-            "==": "CMIG",
-            "!=": "CMDG",
-            ">": "CMMA",
-            "<": "CMME",
-            ">=": "CMAG",
-            "<=": "CMEG",
-        }
-        if op not in mapping:
-            raise NotImplementedError(f"Operador binário '{op}' não suportado")
-        return mapping[op]
 
     @contextmanager
     def _using_output(self, output: List[str]):

@@ -12,7 +12,7 @@ if str(SRC) not in sys.path:
 import main
 
 class TestCLI(unittest.TestCase):
-    def test_cli_prints_tokens_for_file(self):
+    def test_cli_prints_mepa_code(self):
         file_path = ROOT / "tests" / "files" / "exemplo_valido.txt"
 
         argv_backup = sys.argv[:]
@@ -25,10 +25,10 @@ class TestCLI(unittest.TestCase):
             sys.argv = argv_backup
 
         out = buf.getvalue()
-        self.assertIn("atomo: DEF", out)
-        self.assertIn("lexema: def", out)
-        self.assertIn("EOF", out)
-
+        # Verifica se gerou MEPA válido
+        self.assertIn("INPP", out)
+        self.assertIn("PARA", out)
+        self.assertIn("AMEM", out)
 
 if __name__ == "__main__":
     unittest.main()
