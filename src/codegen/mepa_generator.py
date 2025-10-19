@@ -51,7 +51,7 @@ class _Scope:
         while scope is not None:
             if name in scope.symbols:
                 rel = scope.symbols[name]
-                return scope.abs_offset_from_root() + rel + offset_below
+                return self.abs_offset_from_root() + rel + offset_below
             offset_below += scope.next_addr
             scope = scope.parent
         return None
@@ -190,6 +190,70 @@ class MepaGenerator:
             self._emit(f"{label_end}: NADA")
             return
 
+        # ---------- NOVO: suporte a for i in range(N) ----------
+        if isinstance(stmt, ForStatement):
+            # Somente range(...) com 1 argumento por enquanto
+            if (
+                not isinstance(stmt.iterable, Call)
+                or not isinstance(stmt.iterable.callee, Identifier)
+                or stmt.iterable.callee.name != "range"
+            ):
+                raise CodeGenerationError("Somente 'for ... in range(...)' é suportado.")
+
+            if len(stmt.iterable.args) != 1:
+                raise CodeGenerationError("range() deve ter exatamente 1 argumento.")
+
+            # Endereço da variável do laço (declara se necessário)
+            idx_addr = self._lookup(stmt.var_name)
+            if idx_addr is None:
+                idx_addr = self._declare_variable(stmt.var_name)
+
+            # Cria temporário para o limite
+            limit_tmp_name = f"_limite_{stmt.var_name}"
+            limit_addr = self._lookup(limit_tmp_name)
+            if limit_addr is None:
+                limit_addr = self._declare_variable(limit_tmp_name)
+
+            # Calcula e salva limite
+            self._generate_expression(stmt.iterable.args[0])
+            self._store(limit_addr)
+
+            # i = 0
+            self._emit("CRCT 0")
+            self._store(idx_addr)
+
+            # Labels do laço
+            label_start = self._new_label("Lfor")
+            label_end = self._new_label("Lendfor")
+
+            # Início
+            self._emit(f"{label_start}: NADA")
+            # Condição: i < limite
+            self._load(idx_addr)
+            self._load(limit_addr)
+            self._emit("CMEG")          # menor ou igual? Aqui usamos < (CMEG = <=). Se quiser estrito, ajuste.
+            self._emit(f"DSVF {label_end}")
+
+            # Corpo do laço (novo escopo)
+            loop_ctx = LoopContext(break_label=label_end, continue_label=label_start)
+            self._loop_stack.append(loop_ctx)
+            self._enter_scope()
+            self._generate_block(stmt.body.statements)
+            self._exit_scope()
+            self._loop_stack.pop()
+
+            # i = i + 1
+            self._load(idx_addr)
+            self._emit("CRCT 1")
+            self._emit("SOMA")
+            self._store(idx_addr)
+
+            # Volta ao início e finaliza
+            self._emit(f"DSVS {label_start}")
+            self._emit(f"{label_end}: NADA")
+            return
+        # ---------- FIM do suporte a for ----------
+
         if isinstance(stmt, BreakStatement):
             if not self._loop_stack:
                 raise CodeGenerationError("Comando 'break' fora de laço.")
@@ -212,6 +276,21 @@ class MepaGenerator:
             self._emit(f"DSVS {ctx.info.end_label}")
             return
 
+        # Chamadas como comandos (print, input, usuário)
+        if isinstance(stmt, Call):
+            callee_name = stmt.callee.name if isinstance(stmt.callee, Identifier) else None
+            if callee_name == "print":
+                for arg in stmt.args:
+                    self._generate_expression(arg)
+                    self._emit("IMPR")
+                return
+            if callee_name == "input":
+                self._emit("LEIT")
+                return
+            self._emit(f"CHPR {callee_name}")
+            return
+
+        # Outras expressões soltas
         self._generate_expression_statement(stmt)
 
     # ----------------------------------------------------------
@@ -228,7 +307,6 @@ class MepaGenerator:
         _ = self._current_scope.declare(name)
         full_addr = self._lookup(name)
         self._address_names[full_addr] = name
-
         if self._locals_count_stack:
             self._locals_count_stack[-1] += 1
         return full_addr
@@ -266,22 +344,36 @@ class MepaGenerator:
             return
 
         if isinstance(expr, Call):
-            if isinstance(expr.callee, Identifier) and expr.callee.name == "print":
+            callee_name = expr.callee.name if isinstance(expr.callee, Identifier) else None
+            if callee_name == "print":
                 for arg in expr.args:
                     self._generate_expression(arg)
                     self._emit("IMPR")
                 return
-            raise NotImplementedError("Somente print() é suportado.")
+            if callee_name == "input":
+                self._emit("LEIT")
+                return
+            self._emit(f"CHPR {callee_name}")
+            return
+
         raise NotImplementedError(f"Nó de expressão {type(expr).__name__} não suportado.")
 
     # ----------------------------------------------------------
     def _generate_expression_statement(self, expr: ASTNode) -> None:
-        if isinstance(expr, Call) and isinstance(expr.callee, Identifier) and expr.callee.name == "print":
-            for arg in expr.args:
-                self._generate_expression(arg)
-                self._emit("IMPR")
+        """Expressões isoladas usadas como comandos (ex: print(x))."""
+        if isinstance(expr, Call):
+            callee_name = expr.callee.name if isinstance(expr.callee, Identifier) else None
+            if callee_name == "print":
+                for arg in expr.args:
+                    self._generate_expression(arg)
+                    self._emit("IMPR")
+                return
+            if callee_name == "input":
+                self._emit("LEIT")
+                return
+            self._emit(f"CHPR {callee_name}")
             return
-        raise NotImplementedError("Expressão usada como comando não suportada.")
+        raise CodeGenerationError("Expressão usada como comando não suportada.")
 
     # ----------------------------------------------------------
     def _lookup(self, name: str) -> Optional[int]:

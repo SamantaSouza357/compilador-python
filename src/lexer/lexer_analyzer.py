@@ -40,7 +40,7 @@ class LexerPython:
         self._block_comment_delim: str | None = None  # """ ou '''
 
     def get_tokens(self) -> List[Token]:
-        """Scan the input and return the list of tokens ending with EOF."""
+        """Lê o código-fonte e retorna a lista de tokens terminando com EOF."""
         tokens: List[Token] = []
         indent_stack: List[int] = [0]
 
@@ -60,7 +60,7 @@ class LexerPython:
                 if self._block_comment_delim and self._block_comment_delim in stripped:
                     self._in_block_comment = False
                     self._block_comment_delim = None
-                # Mesmo assim emite NEWLINE para a linha
+
             # Se não for em branco e não estiver em comentário de bloco, calcula a indentação
             elif not is_blank:
                 # Conta espaços/tabs iniciais
@@ -95,6 +95,7 @@ class LexerPython:
                     # Não emite tokens para este conteúdo (tratado como comentário)
                 else:
                     self._tokenize_segment(segment, tokens)
+
             # Mesmo para linhas em branco/somente comentários, emite NEWLINE para o parser usar
             tokens.append(Token(TokenType.NEWLINE, "\n", self.line))
             self.line += 1
@@ -111,37 +112,53 @@ class LexerPython:
         """Tokeniza um trecho de uma linha (sem caracteres de quebra de linha)."""
         pos = 0
         n = len(segment)
+
         while pos < n:
             match = None
             for regex, tipo in self.TOKEN_REGEX:
                 if tipo == TokenType.NEWLINE:
                     continue  # não separar aqui
+
                 pattern = re.compile(regex)
                 match = pattern.match(segment, pos)
                 if match:
                     lexeme = match.group(0)
+
                     if tipo:
+                        # 🔹 Identificadores e palavras-chave
                         if tipo == TokenType.IDENTIFIER:
                             if lexeme in KEYWORDS:
                                 out_tokens.append(Token(TokenType.KEYWORD, lexeme, self.line))
                             else:
                                 if len(lexeme) > 20:
                                     raise LexicalError(
-                                        self.line, "identificador com mais de 20 caracteres"
+                                        self.line,
+                                        "identificador com mais de 20 caracteres",
                                     )
-                                out_tokens.append(Token(tipo, lexeme, self.line))
+                                out_tokens.append(Token(TokenType.IDENTIFIER, lexeme, self.line))
+
+                        # 🔹 Números
                         elif tipo == TokenType.NUMBER:
-                            out_tokens.append(Token(tipo, lexeme, self.line))
+                            out_tokens.append(Token(TokenType.NUMBER, lexeme, self.line))
+
+                        # 🔹 Strings, operadores, delimitadores, atribuições etc.
                         else:
                             out_tokens.append(Token(tipo, lexeme, self.line))
+
+                    # Avança o ponteiro de leitura
                     pos = match.end(0)
+
+                    # Evita tokens inválidos tipo "123abc"
                     if tipo == TokenType.NUMBER and pos < n:
                         nxt = segment[pos]
                         if nxt.isalpha() or nxt == "_":
                             raise LexicalError(self.line, "identificador iniciando com número")
+
                     break
+
             if not match:
                 raise LexicalError(self.line, f"caractere inesperado '{segment[pos]}'")
+
 
 __all__ = [
     "LexerPython",

@@ -28,6 +28,7 @@ from .symbol_table import SymbolTable
 class SemanticAnalyzer:
     """Executa a análise semântica garantindo consistência das variáveis e escopos aninhados."""
 
+    # Funções nativas que não precisam ser declaradas
     BUILTIN_FUNCTIONS: Set[str] = {"print", "input", "range"}
 
     def __init__(self, program: Program) -> None:
@@ -107,6 +108,7 @@ class SemanticAnalyzer:
             self._analyze_block(stmt.body.statements, scope, allow_declarations=True)
 
         elif isinstance(stmt, ForStatement):
+            # Verifica o iterável (ex: range(...))
             self._analyze_expression(stmt.iterable, scope)
             loop_scope = scope.child()
             loop_scope.declare(stmt.var_name, stmt.line)
@@ -117,27 +119,43 @@ class SemanticAnalyzer:
                 self._analyze_expression(stmt.expr, scope)
 
         elif isinstance(stmt, (BreakStatement, ContinueStatement)):
+            # Verificados dentro de laços em nível sintático
             return
 
         else:
-            # Expressões como chamadas de função
+            # Expressões como chamadas de função ou literais soltos
             self._analyze_expression(stmt, scope)
 
     # ---------------------------------------------------------------
-    def _analyze_expression(self, expr: ASTNode, scope: SymbolTable, *, context: str = "value") -> None:
+    def _analyze_expression(
+        self, expr: ASTNode, scope: SymbolTable, *, context: str = "value"
+    ) -> None:
         """Analisa expressões recursivamente."""
         if isinstance(expr, Literal):
             return
 
         if isinstance(expr, Identifier):
-            # funções builtin ou declaradas globalmente
+            # Funções builtin ou declaradas globalmente
             if expr.name in self.BUILTIN_FUNCTIONS or expr.name in self._declared_functions:
                 return
             self._ensure_declared(scope, expr.name, expr.line)
             return
 
         if isinstance(expr, Call):
-            self._analyze_expression(expr.callee, scope, context="call_callee")
+            # Analisa chamada de função
+            if isinstance(expr.callee, Identifier):
+                callee_name = expr.callee.name
+                if (
+                    callee_name not in self.BUILTIN_FUNCTIONS
+                    and callee_name not in self._declared_functions
+                ):
+                    raise SemanticError(
+                        expr.line, f"função '{callee_name}' não declarada"
+                    )
+            else:
+                self._analyze_expression(expr.callee, scope, context="call_callee")
+
+            # Analisa argumentos
             for arg in expr.args:
                 self._analyze_expression(arg, scope)
             return
